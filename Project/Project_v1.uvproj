@@ -509,6 +509,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\src\Program_updata_App.c</FilePath>
             </File>
+            <File>
+              <FileName>接口说明文档.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\接口说明文档.txt</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -560,9 +565,6 @@
               <FilePath>..\Library\src\DrvFMC.c</FilePath>
             </File>
           </Files>
-        </Group>
-        <Group>
-          <GroupName>include</GroupName>
         </Group>
       </Groups>
     </Target>
