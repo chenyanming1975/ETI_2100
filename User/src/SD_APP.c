@@ -575,7 +575,7 @@ void Sd_io_initial(void)
     uint8_t result;
 
     result=0;
-    if((DrvGPIO_GetBit(E_GPC,0))==0)
+    if((DrvGPIO_GetBit(E_GPC,0))==0)//ºÏ≤‚ «∑Ò”–≤Â»ÎSDø®
     {
         if(Sd_io_init_flag==0)
         {
@@ -1230,8 +1230,6 @@ uint8_t Sd_read_file(uint32_t file_type,uint32_t fn_p1,uint32_t fn_p2)
 {
     uint8_t result,k;
     uint16_t l_cnt;
-//     uint8_t result,sec_cnt,k;
-//     uint32_t R_adds;
 
     if(SD_read_flag==0)
     {

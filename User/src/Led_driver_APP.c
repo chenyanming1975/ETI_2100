@@ -51,17 +51,14 @@ void Led_disp_data(uint8_t Data)
 }
 
 //===============================================================================
-//	finction	:Led_status_show	LED状态显示控制函数
-//      Detials		:null
+//	finction	:Led_status_show	
+//  Detials		:null
 //	input		:Data_flag
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-12-3 9:56
-//	modefy		:null
+//	description	:LED状态显示控制函数
 //===============================================================================
 uint8_t	Led_sec_cnt;
 uint8_t	Led_data_flag;
-
 void Led_status_show(void)
 {
     uint8_t i;
@@ -70,19 +67,23 @@ void Led_status_show(void)
 #ifdef __NEWPCB__
     i=Led_data_flag;
     i&=BIT0;
-    if(i==0) DrvGPIO_SetBit (E_GPC,15);		//no err
+    if(i==0) 
+		DrvGPIO_SetBit (E_GPC,15);		//no err
 
     i=Led_data_flag;
     i&=BIT1;
-    if(i==0) DrvGPIO_SetBit (E_GPC,14);		//no alarm
+    if(i==0) 
+		DrvGPIO_SetBit (E_GPC,14);		//no alarm
 
     i=Led_data_flag;
     i&=BIT2;
-    if(i==0)  DrvGPIO_ClrBit (E_GPB,15);		//normal run
+    if(i==0)  
+		DrvGPIO_ClrBit (E_GPB,15);		//normal run
 
     i=Led_data_flag;
     i&=BIT3;
-    if(i==0)  DrvGPIO_SetBit (E_GPB,8);		//no CAL
+    if(i==0)  
+		DrvGPIO_SetBit (E_GPB,8);		//no CAL
 
     if(Led_sec_cnt==4)
     {

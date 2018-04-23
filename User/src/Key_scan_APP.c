@@ -20,10 +20,10 @@ uint8_t Machine_note_use;					//´Ó»ú½Úµã
 uint16_t Machine_note_temp;					//´Ó»ú½ÚµãÉèÖÃ
 
 uint8_t	Key_code_bak;
-uint8_t	Key_scan_time_cnt;
+uint8_t	Key_scan_time_cnt;                 //°´¼üÉ¨Ãè¶¨Ê±¼ÆÊý
 
 volatile uint32_t E_wait_time_temp;				//2012-9-14 13:48
-volatile uint32_t Prj_correlat;					//2012-9-14 13:48
+volatile uint32_t Prj_correlat;					//¹¤³ÌÏµÊýÊ¹ÓÃ2012-9-14 13:48
 
 uint32_t Allow_error;						//Îó²îÔÊÐí·¶Î§2012-11-7 15:18
 uint32_t Alarm_hight_nd;					//¸ßÅ¨¶È±¨¾¯Öµ2012-11-8 11:03
@@ -36,33 +36,35 @@ uint8_t  DCF_switch_select_flag;				//·§µÄ¿ª¹Ø±êÖ¾2012-7-18 15:04
 volatile uint8_t  BCWD_NG_flag;					//²¹³¥ÎÂ¶È±êÖ¾2012-8-2 9:31
 
 volatile uint8_t Menu_lever4_bit_temp;
-uint8_t Menu_lever_select;
-uint8_t Menu_index_select;
-uint8_t Menu_index_finc_select;
-uint8_t Menu_lever1_point;
-uint8_t Menu_lever2_point;
-uint8_t Menu_lever3_point;
-uint8_t Menu_lever3_select;
+uint8_t Menu_lever_select;//ÓÃÓÚ¼ÇÂ¼µ±Ç°µÄ½çÃæÉî¶È
+uint8_t Menu_index_select;//ÔÚÖ÷²Ëµ¥ÖÐÑ¡ÔñÁËÁÐ±íÖÐµÄµÚ¼¸Ïî
+uint8_t Menu_index_finc_select;//ÓÃÓÚ¼ÇÂ¼µÚ¶þ¼¾²Ëµ¥Ñ¡ÔñÁËµÚ¼¸Ïî
+uint8_t Menu_lever3_select;//ÓÃÓÚ¼ÇÂ¼µÚÈý¼¶²Ëµ¥Ñ¡ÔñÁËµÚ¼¸Ïî
+
+uint8_t Menu_lever1_point;//ÓÃÓÚµÚÒ»¼¶²Ëµ¥Ñ­»·ÏÔÊ¾
+uint8_t Menu_lever2_point;//ÓÃÓÚµÚ¶þ¼¶²Ëµ¥µÄÑ­»·ÏÔÊ¾
+uint8_t Menu_lever3_point;//ÓÃÓÚµÚÈý¼¶²Ëµ¥µÄÑ­»·ÏÔÊ¾
+
 
 volatile uint8_t Menu_lever3_start_flag;			//2012-7-18 9:31
 
 uint8_t Menu_lever3_PoPa;
-uint8_t Menu_lever3_PoSeg;
+uint8_t Menu_lever3_PoSeg; //ÔÚÐ¡ÇøÓò·´ÏÔÊ±,Ê¹ÓÃµÄ±äÁ¿
 
 uint8_t Menu_lever4_PoPa;
 uint8_t Menu_lever4_PoSeg;
 
 uint8_t Menu_lever3_Pub_select_cnt;				//for position 2012-7-6 9:14
-uint8_t Menu_lever3_Pub_adj_cnt;				//2012-7-6 14:31
+uint8_t Menu_lever3_Pub_adj_cnt;				//ÔÚÉèÖÃÊý×ÖÖµÊ±,Ê¹ÓÃ¸Ã±äÁ¿¼ÇÂ¼µ±Ç°ÊýÖµ
 
-uint8_t Menu_lever4_Pub_select_cnt;				//for position 2012-7-6 9:14
+uint8_t Menu_lever4_Pub_select_cnt;				//ÓÃÓÚ¼ÇÂ¼ÔÚµÚ4¼¶²Ëµ¥Ñ¡ÔñÁËµÚ¼¸Ïî
 uint8_t Menu_lever4_Pub_adj_cnt;				//2012-7-6 14:31
 
 //struct Menu_reg{
 //              };
 volatile uint8_t  	M_dongtai_flag;				//¶¯Ì¬±êÖ¾
 volatile uint8_t  	M_menur1_lcd_Contrast_temp;		//LCD¹íÓ°Î¢µ÷
-volatile uint8_t  	M_menur1_language_select_temp;		//ÓïÑÔÑ¡Ôñ
+volatile uint8_t  	M_menur1_language_select_temp;		//ÓïÑÔÑ¡Ôñ:2-ÖÐÎÄ 1-Ó¢ÎÄ
 volatile uint8_t  	M_menur1_analy_obj_select_temp;		//1:NH4-N 2:PO4 3:Cu 4:CN
 volatile uint8_t  	M_menur1_unit_select_temp;		//µ¥Î»Ñ¡Ôñ
 volatile uint8_t  	M_menur1_dot_num_select_temp;		//Ð¡ÊýµãÎ»ÊýÑ¡Ôñ
@@ -127,9 +129,9 @@ volatile uint32_t	M_lever4_PZDY_temp;             	//Æ«ÖÃµçÑ¹
 volatile uint32_t	M_lever4_PZDYZ_temp;            	//Æ«ÖÃµçÑ¹Öµ
 volatile uint32_t	M_lever4_CFZ_temp;              	//²î·ÖÖµ
 
-uint32_t	M_lever4_Out1_4ma_temp;				//ÒÔÏÂÊÇ½á¹ûµÄ4~20maÊä³öµÄ¼Ä´æÆ÷
-uint32_t	M_lever4_Out1_20ma_temp;                        //
-uint32_t	M_lever4_Out1_test_ma_temp;                     //
+uint32_t	M_lever4_Out1_4ma_temp;				            //Êä³ö1½á¹û-½á¹û-4ma¶ÔÓ¦Öµ
+uint32_t	M_lever4_Out1_20ma_temp;                        //Êä³ö1½á¹û-½á¹û-20ma¶ÔÓ¦Öµ
+uint32_t	M_lever4_Out1_test_ma_temp;                     //Êä³ö1½á¹û-½á¹û-Êä³ö²âÊÔ
 uint32_t	M_lever4_Out2_4ma_temp;                         //
 uint32_t	M_lever4_Out2_20ma_temp;                        //
 uint32_t	M_lever4_Out2_test_ma_temp;                     //
@@ -151,8 +153,6 @@ uint32_t	M_lever4_jz_Out2_test_ma_temp;                  //
 volatile uint8_t	M_lever3_BYHC_temp;			//±êÒººË²é 2012-7-25 11:52 add
 volatile uint32_t	M_lever3_HCPD_temp;			//ºË²éÅÐ¶Ï 2012-7-25 11:53 add
 
-//uint16_t 	M_menur3_battery_all_set_temp;
-//uint16_t	M_menur3_direction_temp;
 volatile uint16_t 	M_menur3_switch_temp;
 volatile uint16_t 	M_menur3_ISE_temp;
 
@@ -175,11 +175,9 @@ void Uart2_reinitial(void);			//2012-8-13 17:03
 
 //===============================================================================
 //	finction	:Shift_165_Data	:driver 165
-//	input		:null
-//	output		:null
 //	return		:IO_data_temp	:IO bit data
 //	edit		:sam 2012.06.13
-//	modefy		:null
+//	description	:»ñÈ¡1bitµÄÖµ
 //===============================================================================
 int32_t Shift_165_Data(void)			//°´¼üÐ¾Æ¬Çý¶¯
 {
@@ -195,18 +193,16 @@ int32_t Shift_165_Data(void)			//°´¼üÐ¾Æ¬Çý¶¯
 }
 //===============================================================================
 //	finction	:Read_IC_165_Data	:driver 165
-//	input		:null
-//	output		:null
 //	return		:data_165   key code
 //	edit		:sam 2012.06.13
-//	modefy		:null
+//	description	:»ñÈ¡1byteµÄÖµ
 //===============================================================================
 int32_t Read_IC_165_Data(void)			//¶ÁÇý¶¯Ð¾Æ¬µÄ¼üÖµ
 {
     uint32_t i,j=0,data_165=0;
 
     DrvGPIO_Open (E_GPC,1, E_IO_OUTPUT);	//SPI0 SCK
-    DrvGPIO_Open (E_GPC,2, E_IO_INPUT);	//SPI0 MISO
+    DrvGPIO_Open (E_GPC,2, E_IO_INPUT);	    //SPI0 MISO
     DrvGPIO_Open (E_GPC,3, E_IO_OUTPUT);	//SPI0 MOSI
 
     DrvGPIO_ClrBit (E_GPC,7);	//Set 165 Pin CSIN=low
@@ -235,91 +231,91 @@ int32_t Read_IC_165_Data(void)			//¶ÁÇý¶¯Ð¾Æ¬µÄ¼üÖµ
 }
 
 //===============================================================================
-//	finction	:Enter_return_disp
-//	input		:null
-//	output		:null
-//	return		:null
+//	finction	:Enter_EnterButton_disp
 //	edit		:sam 2012-9-19 14:00
-//	modefy		:null
+//	description	:°´È·ÈÏ¼üºóÏÔÊ¾½çÃæ
 //===============================================================================
-void Enter_return_disp(void)			//°´È·ÈÏ¼üºóÏÔÊ¾½çÃæ
+void Enter_EnterButton_disp(void)			
 {
     if(Check_pass_word_flag==1)			//2012-10-23 15:56
         Clead_pass_word_reg_data();
-    else
+    else //¸ù¾Ýµ±Ç°½çÃæÉî¶È£¬µ÷ÕûMenu_lever_selectµÄÖµ
     {
-        if((Menu_lever_select>=3)&&(Key_code_bak!=KEY_CODE_ESC))
+        if((Menu_lever_select>=3) && (Key_code_bak != KEY_CODE_ESC))//Ã»ÓÐ°´ESC¼ü
         {
-            if(Menu_lever_select==3)
+            if(Menu_lever_select==3)//µ±Ç°½çÃæÉî¶ÈÎª3
             {
-                if((Menu_index_select==2)&&(Menu_index_finc_select==1))
-                    M_menur1_analy_obj_select_temp=Menu_lever3_Pub_select_cnt;
-                if((Menu_index_select==2)&&(Menu_index_finc_select==3))
-                    M_menur1_unit_select_temp=Menu_lever3_Pub_select_cnt;
-                if((Menu_index_select==2)&&(Menu_index_finc_select==11))
-                    M_menur1_ZDXS_select_temp=Menu_lever3_Pub_select_cnt;
-                if((Menu_index_select==2)&&(Menu_index_finc_select==17))
-                    Updata_slope_flag=Menu_lever3_Pub_select_cnt;
+                if((Menu_index_select==2)&&(Menu_index_finc_select==1))//Ö÷²Ëµ¥Ñ¡ÔñµÚ2ÐÐ-·ÖÎöÉèÖÃ£¬Ö÷²Ëµ¥µÄÏÂÒ»¼¶²Ëµ¥Ñ¡ÔñÁËµÚ1ÐÐ-·ÖÎöÎï
+                    M_menur1_analy_obj_select_temp=Menu_lever3_Pub_select_cnt;//ÉèÖÃ·ÖÎö¶ÔÏó
+                if((Menu_index_select==2)&&(Menu_index_finc_select==3))//Ö÷²Ëµ¥Ñ¡ÔñµÚ2ÐÐ-·ÖÎöÉèÖÃ£¬Ö÷²Ëµ¥µÄÏÂÒ»¼¶²Ëµ¥Ñ¡ÔñÁËµÚ3ÐÐ-µ¥Î»
+                    M_menur1_unit_select_temp=Menu_lever3_Pub_select_cnt;//ÉèÖÃµ¥Î»
+                if((Menu_index_select==2)&&(Menu_index_finc_select==11))//Ö÷²Ëµ¥Ñ¡ÔñµÚ2ÐÐ-·ÖÎöÉèÖÃ£¬Ö÷²Ëµ¥µÄÏÂÒ»¼¶²Ëµ¥Ñ¡ÔñÁËµÚ11ÐÐ-×Ô¶¯Ï¡ÊÍ
+                    M_menur1_ZDXS_select_temp=Menu_lever3_Pub_select_cnt;//×Ô¶¯Ï¡ÊÍÑ¡Ôñ
+                if((Menu_index_select==2)&&(Menu_index_finc_select==17))//Ö÷²Ëµ¥Ñ¡ÔñµÚ2ÐÐ-·ÖÎöÉèÖÃ£¬Ö÷²Ëµ¥µÄÏÂÒ»¼¶²Ëµ¥Ñ¡ÔñÁËµÚ17ÐÐ-Ð±ÂÊ¸üÐÂ
+                    Updata_slope_flag=Menu_lever3_Pub_select_cnt;       //µ±Ç°Ê¹ÓÃÐ±ÂÊÔÊÐí¸üÐÂ±êÖ¾
 
-                if((Menu_index_select==2)&&(Menu_index_finc_select==18))		//2014-1-26 10:28
-                    Disple_flag=Menu_lever3_Pub_select_cnt;
+                if((Menu_index_select==2)&&(Menu_index_finc_select==18))//Ö÷²Ëµ¥Ñ¡ÔñµÚ2ÐÐ-·ÖÎöÉèÖÃ£¬Ö÷²Ëµ¥µÄÏÂÒ»¼¶²Ëµ¥Ñ¡ÔñÁËµÚ18ÐÐ-Ïû½â
+                    Disple_flag=Menu_lever3_Pub_select_cnt;//ÉèÖÃÊÇ·ñÏû½â
 
-                if((Menu_index_select==3)&&(Menu_index_finc_select==1))
+                if((Menu_index_select==3)&&(Menu_index_finc_select==1))//Ö÷²Ëµ¥Ñ¡ÔñµÚ3ÐÐ-·½·¨ÉèÖÃ£¬Ö÷²Ëµ¥µÄÏÂÒ»¼¶²Ëµ¥Ñ¡ÔñÁËµÚ1ÐÐ-·ÖÎö·½·¨
                 {
-                    M_menur1_LZDJ_select_temp=Menu_lever3_Pub_select_cnt;
-                    M_menur1_DL_select_temp=Menu_lever3_Pub_select_cnt;
+                    M_menur1_LZDJ_select_temp=Menu_lever3_Pub_select_cnt;//Àë×Óµç×Ó 
+                    M_menur1_DL_select_temp=Menu_lever3_Pub_select_cnt;  //¶¨Á¿·½·¨ 
 
                     if(M_menur1_LZDJ_select_temp==1)
                     {
-                        M_menur1_slope_temp=0x00005960;
-                        M_menur1_slope_flag=2;
+                        M_menur1_slope_temp=0x00005960;//µ±Ç°Ê¹ÓÃµÄÐ±ÂÊ
+                        M_menur1_slope_flag=2;         //µ±Ç°Ê¹ÓÃµÄÐ±ÂÊ·ûºÅ
                     }
                     else
                     {
-                        M_menur1_slope_temp=0x00000100;
-                        M_menur1_slope_flag=1;
+                        M_menur1_slope_temp=0x00000100;//µ±Ç°Ê¹ÓÃµÄÐ±ÂÊ
+                        M_menur1_slope_flag=1;         //µ±Ç°Ê¹ÓÃµÄÐ±ÂÊ·ûºÅ
                     }
                 }
-                if((Menu_index_select==3)&&(Menu_index_finc_select==2))
-                    M_menur1_DL_select_temp=Menu_lever3_Pub_select_cnt;
-                if((Menu_index_select==3)&&(Menu_index_finc_select==6))				//½Á°è·½Ïò
-                    M_menur1_direction_select_temp=Menu_lever3_Pub_select_cnt;
-                if((Menu_index_select==3)&&(Menu_index_finc_select==8))
-                    M_menur1_dot_num_select_temp=Menu_lever3_Pub_select_cnt;
-                if((Menu_index_select==3)&&(Menu_index_finc_select==13))
+                if((Menu_index_select==3)&&(Menu_index_finc_select==2))//·½·¨ÉèÖÃ-¶¨Á¿·½·¨
+                    M_menur1_DL_select_temp=Menu_lever3_Pub_select_cnt;//¼ÓÈë·¨£¬ÇúÏß·¨
+                if((Menu_index_select==3)&&(Menu_index_finc_select==6))//·½·¨ÉèÖÃ-½Á°è·½Ïò
+                    M_menur1_direction_select_temp=Menu_lever3_Pub_select_cnt;//Ë³Ê±Õë»òÕßÄæÊ±Õë
+                if((Menu_index_select==3)&&(Menu_index_finc_select==8))//·½·¨ÉèÖÃ-Ð¡ÊýµãÎ»Êý
+                    M_menur1_dot_num_select_temp=Menu_lever3_Pub_select_cnt;//ÓÐ1£¬2£¬3¿ÉÑ¡
+                if((Menu_index_select==3)&&(Menu_index_finc_select==13))//¹¤³ÌÏµÊý
                 {
-                    if(Menu_lever3_Pub_select_cnt==4) M_dongtai_flag=1;
-                    else                              M_dongtai_flag=0;
+                    if(Menu_lever3_Pub_select_cnt==4) 
+						M_dongtai_flag=1;
+                    else                              
+						M_dongtai_flag=0;
                 }
-                if((Menu_index_select==7)&&(Menu_index_finc_select==3))
-                    //M_menur1_language_select_temp=Menu_lever3_Pub_select_cnt;	//2016/4/20 14:00
+                if((Menu_index_select==7)&&(Menu_index_finc_select==3))//ÏµÍ³ÉèÖÃ-ÓïÑÔÑ¡Ôñ
                     M_menur1_language_select_temp=2;
             }
-            else if(Menu_lever_select==4)
+            else if(Menu_lever_select==4)//µ±Ç°½çÃæÉî¶ÈÎª4
             {
-                if((Menu_index_select==1)&&(Menu_index_finc_select==1)&&(Menu_lever3_select==1))	//Íâ²¿´¥·¢
+                if((Menu_index_select==1)&&(Menu_index_finc_select==1)&&(Menu_lever3_select==1))//¿ªÊ¼-×Ô¶¯·ÖÎö-·ÖÎöÆµÂÊ
                 {
-                    if(Menu_lever4_Pub_select_cnt==5) M_lever4_extern_trrig_flag=1;
-                    else                              M_lever4_extern_trrig_flag=0;
+                    if(Menu_lever4_Pub_select_cnt==5)
+						M_lever4_extern_trrig_flag=1;//ÓÃÓÚ±êÖ¾Ê¹ÓÃÍâ²¿´¥·¢
+                    else                              
+						M_lever4_extern_trrig_flag=0;
                 }
-                if((Menu_index_select==4)&&(Menu_index_finc_select==5)&&(Menu_lever3_select==2))	//½Á°è·½Ïò
+                if((Menu_index_select==4)&&(Menu_index_finc_select==5)&&(Menu_lever3_select==2))//ÊÖ¶¯²Ù×÷-½Á°è-½Á°è·½Ïò
                     M_menur1_direction_select_temp=Menu_lever4_Pub_select_cnt;
-                if((Menu_index_select==6)&&(Menu_index_finc_select==1)&&(Menu_lever3_select==2))
+                if((Menu_index_select==6)&&(Menu_index_finc_select==1)&&(Menu_lever3_select==2))//ÊäÈëÊä³ö-RS485Êä³ö-²¨ÌØÂÊ
                 {
                     Uart2_BAUD_select_temp=Menu_lever4_Pub_select_cnt;
                     Uart2_reinitial();
                 }
-                if((Menu_index_select==6)&&(Menu_index_finc_select==1)&&(Menu_lever3_select==3))
+                if((Menu_index_select==6)&&(Menu_index_finc_select==1)&&(Menu_lever3_select==3))//ÊäÈëÊä³ö-RS485Êä³ö-ÆæÅ¼Ð£Ñé
                     Uart2_JOJY_select_temp=Menu_lever4_Pub_select_cnt;
-                if((Menu_index_select==6)&&(Menu_index_finc_select==1)&&(Menu_lever3_select==4))
+                if((Menu_index_select==6)&&(Menu_index_finc_select==1)&&(Menu_lever3_select==4))//ÊäÈëÊä³ö-RS485Êä³ö-Í£Ö¹Î»
                     Uart2_STOP_select_temp=Menu_lever4_Pub_select_cnt;
-
             }
         }
-        if((Menu_lever_select==3)&&(Menu_index_select==7)&&(Menu_index_finc_select==3))
+        if((Menu_lever_select==3) && (Menu_index_select==7) && (Menu_index_finc_select==3))//ÏµÍ³ÉèÖÃ-ÓïÑÔÑ¡Ôñ-
         {
-            if(Key_code_bak==KEY_CODE_ESC) --Menu_lever_select;
-            else
+            if(Key_code_bak==KEY_CODE_ESC) //·µ»ØÉÏÒ»´Î½çÃæ
+				--Menu_lever_select;
+            else                           //·µ»Øµ½Ô­Ê¼¿ª»úºóµÄ½çÃæ
             {
                 Menu_lever_select=0;
                 Menu_index_finc_select=1;
@@ -332,7 +328,7 @@ void Enter_return_disp(void)			//°´È·ÈÏ¼üºóÏÔÊ¾½çÃæ
 
 
     Write_system_reg_to_chip();
-
+	
     Pwm_menu_lever=0;
     Pwm_menu_select=0;
     Pwm_menu_select1=0;
@@ -342,15 +338,14 @@ void Enter_return_disp(void)			//°´È·ÈÏ¼üºóÏÔÊ¾½çÃæ
     Pwm_menu_PoSeg=0;
     Pwm_menu_PoSeg_pub=0;
 
-    switch(Menu_lever_select)
+    switch(Menu_lever_select)//¸ù¾Ýµ±Ç°½çÃæÉî¶È,³õÊ¼»¯Ò»Ð©±äÁ¿µÄÖµ
     {
     case 3:
         //clear lever4 ram
-        Menu_lever4_Pub_select_cnt=1;
+        Menu_lever4_Pub_select_cnt=1;//4¼¶²Ëµ¥Ñ¡Ôñ¼ÆÊý
         Menu_lever4_bit_temp=0;
         Menu_lever4_Pub_adj_cnt=0;
         Disp_gdgdy_flag=0;
-//    	       Pro_wait_time_flag=0;
         DCF_switch_select_flag=0;
         break;
     case 2:
@@ -361,7 +356,6 @@ void Enter_return_disp(void)			//°´È·ÈÏ¼üºóÏÔÊ¾½çÃæ
         Jiaozheng.disp_index=0;
         Baojing.disp_index=0;
         Cuowu.disp_index=0;
-////    	       prg_wait_clr_flag=0;
         break;
     case 1:
         Menu_lever2_point=1;
@@ -379,57 +373,49 @@ void Enter_return_disp(void)			//°´È·ÈÏ¼üºóÏÔÊ¾½çÃæ
 
 //===============================================================================
 //	finction	:Key_scan_bounce_time
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012.06.14
-//	modefy		:null
+//	description	://°´¼üÈ¥¶¶¶¯¼ÆÊ±
 //===============================================================================
 void Key_scan_bounce_time(void)
 {
-    if(Key_scan_time_cnt&&0x80)
+    if(Key_scan_time_cnt !=0)
     {
         --Key_scan_time_cnt;
-        if(Key_scan_time_cnt==0x80)
-            Key_scan_time_cnt=0;
     }
 }
 
 //===============================================================================
 //	finction	:Get_lv2menu_nun
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012.06.14
-//	modefy		:null
+//	description	:null
 //===============================================================================
 uint8_t Get_lv2menu_nun(void)
 {
     uint8_t i=0;
     switch(Menu_index_select)
     {
-    case 1:
+    case 1://¿ªÊ¼
         i=MENU_LV21_NUM;
         break;
-    case 2:
+    case 2://·ÖÎöÉèÖÃ
         i=MENU_LV22_NUM;
         break;
-    case 3:
+    case 3://·½·¨ÉèÖÃ
         if(fix_axbc_falg==0)
             i=MENU_LV23_NUM;
         else
             i=MENU_LV23_NUM-2;
         break;
-    case 4:
+    case 4://ÊÖ¹¤²Ù×÷
         i=MENU_LV24_NUM;
         break;
-    case 5:
+    case 5://ÀúÊ·¼ÇÂ¼
         i=MENU_LV25_NUM;
         break;
-    case 6:
+    case 6://ÊäÈëÊä³ö
         i=MENU_LV26_NUM;
         break;
-    case 7:
+    case 7://ÏµÍ³ÉèÖÃ
         i=MENU_LV27_NUM;
         break;
     }
@@ -438,27 +424,24 @@ uint8_t Get_lv2menu_nun(void)
 
 //===============================================================================
 //	finction	:Key_scan_prosecce	:key code from 165
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012.06.14
-//	modefy		:null
+//	modefy		:°´¼ü´¦Àíº¯Êý,ÔÚmainÖÐÑ­»·ÔËÐÐ
 //===============================================================================
 void Key_scan_prosecce(void)
 {
-    uint32_t Key_code_temp,Pub_temp,disp_d,rds;
+    uint32_t Key_code_temp, Pub_temp, disp_d,rds;
     uint8_t i,m_buff[16];
     float a,b,c,d,rs;
 
-    if(Key_scan_time_cnt==0)
+    if(Key_scan_time_cnt ==0 )
     {
-        Key_scan_time_cnt=0x86;			// key bounce time
+        Key_scan_time_cnt=0x6;			    //ÉèÖÃ°´¼üÉ¨Ãè¼ä¸ô Key_scan_bounce_timeº¯ÊýÖÐ×Ô¼õ
 
-        Key_code_temp=Read_IC_165_Data(); 	//get key code
-        Key_code_temp&=0x7f;
-        if(Key_code_bak!=Key_code_temp)
+        Key_code_temp=Read_IC_165_Data() & 0x7f; 	//get key code (0-6bitÎªÓÐÐ§Öµ)
+		
+        if(Key_code_bak != Key_code_temp)
         {
-            Key_code_bak=Key_code_temp;
+            Key_code_bak = Key_code_temp;//½«±¾´Î°´¼üÖµ½øÐÐ±¸·Ý
             switch(Key_code_temp)
             {
             case KEY_CODE_UP:
@@ -472,7 +455,7 @@ void Key_scan_prosecce(void)
                         if(Pass_adj_cnt>=10)
                             Pass_adj_cnt=9;
 
-                        Pass_adj_disp(Pass_adj_cnt,Pass_bit_select);
+                        Pass_adj_disp(Pass_adj_cnt,Pass_bit_select);//¸üÐÂÃÜÂë½çÃæÏÔÊ¾µÄÊý×Ö
                     }
                     else
                     {
@@ -908,7 +891,7 @@ void Key_scan_prosecce(void)
                 }
                 else if(Menu_lever_select>0)				//Èç¹û²Ëµ¥´óÓÚ1¼¶Ôò¼ÌÐøÍË³ö²Ëµ¥
                 {
-                    Enter_return_disp();
+                    Enter_EnterButton_disp();
                     i=ZB_flag;						//2013-1-7 11:43
                     i&=0x02;
                     if(i==0) Display_seg_single(1,126,0x00);
@@ -1079,17 +1062,16 @@ void Key_scan_prosecce(void)
             case KEY_CODE_ENTER:
                 Set_back_light_10sec();
                 Set_en_buzz_finc(1,4,200,100);
-                if(Prog_disp_flag==1)
+                if(Prog_disp_flag==1)//×Ô¶¯·ÖÎö¹ý³ÌÖÐ
                     break;
 
-                if(Check_prio_finc())
+                if(Check_prio_finc())//¼ì²éÈ¨ÏÞ
                     break;
-
                 else if(Menu_lever_select<3)	//²Ëµ¥Ð¡ÓÚ3¼¶È·ÈÏ½øÈëÏÂÒ»¼¶²Ëµ¥
                 {
                     ++Menu_lever_select;
                     if(Menu_lever_select==2)
-                        Lever2_menu_num=Get_lv2menu_nun();
+                        Lever2_menu_num = Get_lv2menu_nun();
                     if(Menu_lever_select==3)
                     {
                         Menu_lever3_point=1;
@@ -1103,7 +1085,8 @@ void Key_scan_prosecce(void)
                 {
                     if(Menu_lever3_start_flag>=0x10)
                     {
-                        if(Wait_clock_flag==1) __nop();			//2013-6-8 9:58 µÈ´ýµÄÊ±ºò¿ª·ÅÐÞ¸ÄÈ¨ÏÞ
+                        if(Wait_clock_flag==1) 
+							__nop();			//2013-6-8 9:58 µÈ´ýµÄÊ±ºò¿ª·ÅÐÞ¸ÄÈ¨ÏÞ
                         else if((Menu_index_select==1)||(Menu_index_select==4)||(Menu_index_select==6))
                         {
                             Clear_n_page_ram(0,7);
@@ -1132,7 +1115,7 @@ void Key_scan_prosecce(void)
                         }
                     }
 
-                    if(Display_lever4_en_flag())
+                    if(Display_lever4_en_flag())//ÅÐ¶ÏÊÇ·ñÓÐµÚËÄ¼¶²Ëµ¥
                     {
                         Menu_lever4_Pub_select_cnt=1;
                         Menu_lever4_Pub_adj_cnt=0;
@@ -1191,7 +1174,8 @@ void Key_scan_prosecce(void)
                                 break;
                             }
                         }
-                        else Enter_return_disp();
+                        else 
+							Enter_EnterButton_disp();
                     }
                 }
                 else if(Menu_lever_select==4)		//µÚËÄ¼¶²Ëµ¥È·ÈÏÈë¿Ú
@@ -1201,7 +1185,6 @@ void Key_scan_prosecce(void)
                         ++Pwm_menu_lever;
                         if(Pwm_menu_lever==2)
                             Pwm_menu_select1=1;
-
                         if(Pwm_menu_lever<=3)
                             Disp_pwm_menu();
                         else
@@ -1263,8 +1246,6 @@ void Key_scan_prosecce(void)
                     {
                         Clead_pass_word_reg_data();		//2012-10-23 10:08
                     }
-/////                        if((Far_status_flag!=0)&&(Menu_lever3_start_flag<0x10)&&(Hand_finction_select==0))
-/////                            Set_tx_cmd_data_finc(0xd1,0x06,U_DRIVER_FA_ALL_WO_ADDS,0x0000,0x00);		//close all v
 
                     Far_status_flag=0;
 
@@ -2971,7 +2952,6 @@ void Key_Menu_lever3_up_finc(void)
                 ++Menu_lever3_point;
                 ++Menu_lever3_select;
                 Display_menu_index();
-//                      Menu_lever3_start_flag&=~BIT0;
             }
             else if((Menu_lever3_select<MENU_LV351_NUM)&&(Menu_lever3_point==i))
             {
@@ -2980,14 +2960,11 @@ void Key_Menu_lever3_up_finc(void)
                 if((Menu_lever3_select==6)&&(Prog_disp_flag==0))
                 {
                     __nop();
-////                      	if(Menu_lever3_start_flag<0x10)
-////                      	Menu_lever3_start_flag=BIT0;
                 }
             }
             else
             {
                 Menu_lever3_point=Menu_lever3_select=1;
-//                      Menu_lever3_start_flag&=~BIT0;
                 Display_menu_index();
             }
             break;
@@ -2996,12 +2973,9 @@ void Key_Menu_lever3_up_finc(void)
             {
                 ++Menu_lever3_point;
                 ++Menu_lever3_select;
-////                      Menu_lever3_start_flag&=~BIT1;
                 if((Menu_lever3_select==2)&&(Prog_disp_flag==0))
                 {
                     __nop();
-////                      	if((Menu_lever3_start_flag<0x10)&&(Auto_check_clock_flag!=1))
-////                      	Menu_lever3_start_flag=BIT1;
                 }
             }
             else if((Menu_lever3_select<MENU_LV352_NUM)&&(Menu_lever3_point==i))
@@ -3009,7 +2983,6 @@ void Key_Menu_lever3_up_finc(void)
             else
             {
                 Menu_lever3_point=Menu_lever3_select=1;
-////                      Menu_lever3_start_flag&=~BIT1;
             }
             Display_menu_index();
             break;
@@ -3018,12 +2991,9 @@ void Key_Menu_lever3_up_finc(void)
             {
                 ++Menu_lever3_point;
                 ++Menu_lever3_select;
-////                      Menu_lever3_start_flag&=~BIT2;
                 if((Menu_lever3_select==3)&&(Prog_disp_flag==0))
                 {
                     __nop();
-////                      	if((Menu_lever3_start_flag<0x10)&&(Auto_check_clock_flag!=1))
-////                      	Menu_lever3_start_flag=BIT2;
                 }
             }
             else if((Menu_lever3_select<MENU_LV353_NUM)&&(Menu_lever3_point==i))
@@ -3031,7 +3001,6 @@ void Key_Menu_lever3_up_finc(void)
             else
             {
                 Menu_lever3_point=Menu_lever3_select=1;
-////                      Menu_lever3_start_flag&=~BIT2;
             }
             Display_menu_index();
             break;
@@ -3040,12 +3009,9 @@ void Key_Menu_lever3_up_finc(void)
             {
                 ++Menu_lever3_point;
                 ++Menu_lever3_select;
-////                      Menu_lever3_start_flag&=~BIT3;
                 if((Menu_lever3_select==2)&&(Prog_disp_flag==0))
                 {
                     __nop();
-////                      	if((Menu_lever3_start_flag<0x10)&&(Auto_check_clock_flag!=1))
-////                      	Menu_lever3_start_flag=BIT3;
                 }
             }
             else if((Menu_lever3_select<MENU_LV354_NUM)&&(Menu_lever3_point==i))
@@ -3436,7 +3402,7 @@ void Key_Menu_lever3_down_finc(void)
         Menu1_adj_valu();
         break;
 //----------------------------------------------
-    case 2: 					//²ÎÊýÉèÖÃ-²ÎÊýµ÷Õû 							//
+    case 2: 					//·-²ÎÊýµ÷Õû 							//
         ++Menu_lever3_Pub_adj_cnt;
         if(Menu_lever3_Pub_adj_cnt>=10)
             Menu_lever3_Pub_adj_cnt=0;
@@ -4631,21 +4597,21 @@ void Menu_lever3_4_enter_finction(void)
 
     switch(Menu_index_select)
     {
-    case 0x01:		//ÒªÆô¶¯µÄ¿ØÖÆ
+    case 0x01:		//¿ªÊ¼
         if(Prog_disp_flag!=0)
             break;
 
-        if(Menu_lever_select==3)
+        if(Menu_lever_select==3)//3¼¶²Ëµ¥
         {
             i=Menu_lever3_start_flag;
             switch(Menu_index_finc_select)
             {
             case 1:
-                if((Menu_lever3_start_flag<0x10)&&(Menu_lever3_select==6))
+                if((Menu_lever3_start_flag<0x10) && (Menu_lever3_select==6))
                 {
                     Menu_lever3_start_flag&=~BIT0;
 
-                    Menu_lever3_start_flag=BIT4;
+                    Menu_lever3_start_flag=BIT4;  //×Ô¶¯·ÖÎö
                     Memu1_auto_step_status=0;
                     Pro_step_status=0;
                     Auto_check_clock_flag=0;
@@ -4714,7 +4680,7 @@ void Menu_lever3_4_enter_finction(void)
                 if((Menu_lever3_select==2)&&(Menu_lever3_start_flag<0x10))
                 {
                     Menu_lever3_start_flag&=~BIT1;
-                    Menu_lever3_start_flag=BIT5;
+                    Menu_lever3_start_flag=BIT5;//ÊÖ¶¯·ÖÎö
                     Memu1_auto_step_status=0;
                     Memu1_hand_step_status=0;
                     Pro_step_status=0;
@@ -4727,7 +4693,7 @@ void Menu_lever3_4_enter_finction(void)
                 if((Menu_lever3_select==3)&&(Menu_lever3_start_flag<0x10))
                 {
                     Menu_lever3_start_flag&=~BIT2;
-                    Menu_lever3_start_flag=BIT6;
+                    Menu_lever3_start_flag=BIT6;//ÊÖ¶¯Ð£Õý
                     Memu1_auto_step_status=0;
                     Memu1_jiaozheng_step_status=0;
                     Pro_step_status=0;
@@ -4739,7 +4705,7 @@ void Menu_lever3_4_enter_finction(void)
                 if((Menu_lever3_select==2)&&(Menu_lever3_start_flag<0x10))
                 {
                     Menu_lever3_start_flag&=~BIT3;
-                    Menu_lever3_start_flag=BIT7;
+                    Menu_lever3_start_flag=BIT7;//ÊÖ¶¯ºË²é
                     Memu1_auto_step_status=0;
                     Memu1_biaoye_step_status=0;
                     Pro_step_status=0;
@@ -4857,10 +4823,7 @@ void Menu_lever3_4_enter_finction(void)
                 DCF_switch_select_flag=1;
             break;
         case 4:
-/////            	     if(Menu_lever_select==3)
-/////            	     {
-/////            	     	Disp_input_switch_status(Menu_lever3_select);
-/////		     }
+
             break;
         case 5:			//½Á°è
             switch(Menu_lever3_select)
@@ -5029,7 +4992,6 @@ void Menu_lever3_4_enter_finction(void)
         {
         case 1:			//485 ²âÊÔ
             if(Menu_lever3_select<=4)
-////		        Uart2_reinitial();
                 __nop();		//test potocal
             else
                 __nop();		//test potocal
@@ -5069,18 +5031,7 @@ void Menu_lever3_4_enter_finction(void)
         case 1:			//ÉèÖÃÊ±¼ä
         case 2:
             RTC_write_date();
-            //Test_potocal_time_flag=0x04;        //2014-2-24 17:40
             break;
-//            	case 3:			// ÓïÑÔÑ¡ÔñÇÐ»»
-//            	break;
-//            	case 4:			//
-//            	case 5:			//
-//            	case 6:			//
-//            	case 7:			//
-//            	case 8:			//
-//            	case 9:			//
-//            	case 10:		//
-//            	break;
         }
         break;
     }
@@ -5096,22 +5047,22 @@ exit_34_enter_finction:
         else if((Menu_lever_select==3)&&(Menu_index_select==2))
         {
             if(Menu_index_finc_select!=12)
-                Enter_return_disp();
+                Enter_EnterButton_disp();
         }
         else if((Menu_lever_select==3)&&(Menu_index_select==4)&&(Menu_index_finc_select==9))
         {
-            Enter_return_disp();
+            Enter_EnterButton_disp();
         }
         else if((Menu_lever_select==3)&&(Menu_index_select==7))
         {
-            Enter_return_disp();
+            Enter_EnterButton_disp();
         }
         else if(Menu_lever_select==4)
         {
             if((Menu_index_finc_select==12)&&(Menu_index_select==2))
-                Enter_return_disp();
+                Enter_EnterButton_disp();
             else
-                Enter_return_disp();
+                Enter_EnterButton_disp();
         }
     }
 }
@@ -8451,11 +8402,8 @@ exit_l4_u:
 }
 //===============================================================================
 //	finction	:Get_uart_note
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-8-13 17:03
-//	modefy		:null
+//	modefy		:
 //===============================================================================
 void Get_uart_note(void)		//È¡»úÆ÷½ÚµãÖµ
 {
@@ -8481,11 +8429,8 @@ void Get_uart_note(void)		//È¡»úÆ÷½ÚµãÖµ
 
 //===============================================================================
 //	finction	:Uart2_reinitial
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-8-13 17:03
-//	modefy		:null
+//	modefy		:ÔÚ½çÃæÉèÖÃ²¨ÌØÂÊºóÖØÐÂ³õÊ¼»¯´®¿Ú2
 //===============================================================================
 void Uart2_reinitial(void)		//´®¿Ú2³õÊ¼»¯
 {

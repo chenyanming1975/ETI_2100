@@ -166,18 +166,6 @@ void Disp_updata_status(uint8_t finc)
         i=12;
         break;
     case 3:
-///             data_buff[0]='P';
-///             data_buff[1]='R';
-///             data_buff[2]='O';
-///             data_buff[3]='G';
-///             data_buff[4]='R';
-///             data_buff[5]='A';
-///             data_buff[6]='M';
-///             data_buff[7]=19;
-///             data_buff[8]=19;
-///             data_buff[9]=19;
-///             i=10;
-
         data_buff[0]='L';
         data_buff[1]='O';
         data_buff[2]='A';
@@ -368,11 +356,6 @@ void Aoto_program_ctrl(void)
                         }
                         else
                         {
-/////             	            if(Aoto_program_flag==1)
-/////             	            Set_tx_cmd_data_finc(U_SENCER_MODU_ADDS,0x10,U_SENSER_SELF_PROG_DATA_WO_ADDS+P_cmd_adds,0x0020,0x40);
-/////             	            else
-/////             	            Set_tx_cmd_data_finc(0xd1,0x10,U_DRIVER_SELF_PROG_DATA_WO_ADDS+P_cmd_adds,0x0020,0x40);
-
                             Uart_tx_rx_fifo_int_FLAG&=0xf9;	//clear bit2,3
                             U_RX_TX_byte_lenth=73;
                             DrvGPIO_ClrBit (E_GPB,6);

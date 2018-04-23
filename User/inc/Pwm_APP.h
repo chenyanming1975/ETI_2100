@@ -12,12 +12,12 @@
 
 //--------------------------------------------------------------------------------------------
 #ifdef __PWM_APP__
-uint8_t  Pwm_out_adj_flag;
-uint16_t adj_4ma_pwm_data;
-uint16_t adj_20ma_pwm_data;
+uint8_t  Pwm_out_adj_flag;//用于标志修改了4ma/20ma对应值 1=修改了,2=初始化值
+uint16_t adj_4ma_pwm_data;//用于赋值PWMA->CMR0
+uint16_t adj_20ma_pwm_data;//用于赋值PWMA->CMR0
 
-uint16_t adj_4ma_pwm1_data;
-uint16_t adj_20ma_pwm1_data;
+uint16_t adj_4ma_pwm1_data;//用于赋值PWMA->CMR1
+uint16_t adj_20ma_pwm1_data;//用于赋值PWMA->CMR1
 
 float Pwm_last_result;
 

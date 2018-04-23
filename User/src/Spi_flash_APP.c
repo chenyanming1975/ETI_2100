@@ -12,53 +12,49 @@
 //-------------------------------------------------------------------------------------------
 #include "Incude_all.h"
 //-------------------------------------------------------------------------------------------
-uint16_t export_tx_lenth;
-uint16_t export_tx_lenth_cnt;
-uint8_t export_tx_flag;
-uint8_t export_data_select;
-uint32_t FX_export_index_adds_point;
-uint32_t JZ_export_index_adds_point;
-uint32_t BJ_export_index_adds_point;
-uint32_t CW_export_index_adds_point;
+uint16_t export_tx_lenth;//需要导出的数据总长度
+uint16_t export_tx_lenth_cnt;//当前导出的数据长度
+uint8_t export_tx_flag;//导出标志, 1=正在导出数据过程中; 0 = 导出数据完成/串口空闲
+uint8_t export_data_select;//需要导出的数据类型(分析/校正/报警/错误)
+uint32_t FX_export_index_adds_point;//分析导出开始地址:高16位保存页地址, 低9位保存该页中的下标,从0x00040000开始
+uint32_t JZ_export_index_adds_point;//校正导出开始地址
+uint32_t BJ_export_index_adds_point;//报警导出开始地址
+uint32_t CW_export_index_adds_point;//错误导出开始地址
 //-----------------------------------------
-uint8_t	pub_Adds_h;
-uint8_t	pub_Adds_m;
-uint8_t	pub_Adds_l;
-uint8_t	pub_buff_lenth;
-
-uint8_t	buff_page[512];
-uint8_t	buff_page_w[512];
+uint8_t	buff_page[512];  //用于保存从flash中读取出的一页数据
+uint8_t	buff_page_w[512];//用于保存写flash的数据
 uint8_t buff_page_exp[512];
-uint8_t buff_page_exp_tx[512];
-
+uint8_t buff_page_exp_tx[512];//用于保存导出数据的缓存
+uint8_t	Buff_68[512];  //用于保存6×8的字库
+uint8_t	Buff_816[1024];//用于保存8×16的字库
 uint8_t disp_sec_screen_flag;
 
-uint8_t Men_del_flag;
+uint8_t Men_del_flag;//用于标志是否擦除memory中的数据
 //-----------------------------------------
-uint32_t FX_write_index_adds_point;
-uint32_t FX_read_index_adds_point;
-uint32_t JZ_write_index_adds_point;
-uint32_t JZ_read_index_adds_point;
-uint32_t BJ_write_index_adds_point;
-uint32_t BJ_read_index_adds_point;
-uint32_t CW_write_index_adds_point;
-uint32_t CW_read_index_adds_point;
+uint32_t FX_write_index_adds_point;//分析写地址
+uint32_t FX_read_index_adds_point; //分析读地址
+uint32_t JZ_write_index_adds_point;//校正写地址
+uint32_t JZ_read_index_adds_point; //校正读地址
+uint32_t BJ_write_index_adds_point;//报警写地址
+uint32_t BJ_read_index_adds_point; //报警读地址
+uint32_t CW_write_index_adds_point;//错误写地址
+uint32_t CW_read_index_adds_point; //错误读地址
 
-uint32_t FX_disp_read_index_adds_point;
+uint32_t FX_disp_read_index_adds_point;//需要读取的分析记录地址
 uint32_t JZ_disp_read_index_adds_point;
 uint32_t BJ_disp_read_index_adds_point;
 uint32_t CW_disp_read_index_adds_point;
 
 struct Save_data {
-    uint8_t  xuhao_h;
+    uint8_t  xuhao_h;//序号
     uint8_t  xuhao_l;
-    uint8_t  status;
-    uint8_t  year_h;
+    uint8_t  status; //状态
+    uint8_t  year_h; //年
     uint8_t  year_l;
-    uint8_t  munth;
-    uint8_t  day;
-    uint8_t  hour;
-    uint8_t  minu;
+    uint8_t  munth;  //月
+    uint8_t  day;    //日
+    uint8_t  hour;   //时
+    uint8_t  minu;   //分
     uint8_t  result_ph;
     uint8_t  result_pl;
     uint8_t  result_nh;
@@ -83,11 +79,8 @@ struct Save_data {
 //===================================================================================================================
 //===============================================================================
 //	finction	:Spi_receive_byte
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-10-25 11:18
-//	modefy		:null
+//	description	:发送1byte数据
 //===============================================================================
 void Spi_send_byte(uint8_t data)
 {
@@ -99,11 +92,8 @@ void Spi_send_byte(uint8_t data)
 
 //===============================================================================
 //	finction	:Spi_receive_byte
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-10-25 11:18
-//	modefy		:null
+//	description	:接收1byte数据
 //===============================================================================
 uint8_t Spi_receive_byte(void)
 {
@@ -113,11 +103,8 @@ uint8_t Spi_receive_byte(void)
 
 //===============================================================================
 //	finction	:Spi_read_status
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-10-25 11:18
-//	modefy		:null
+//	description	:读取FLASH状态:是否忙
 //===============================================================================
 uint8_t Spi_read_status(void)
 {
@@ -137,11 +124,8 @@ uint8_t Spi_read_status(void)
 
 //===============================================================================
 //	finction	:SPI_flash_init
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-10-25 11:18
-//	modefy		:null
+//	description	:初始化spi flash
 //===============================================================================
 void SPI_flash_init(void)
 {
@@ -158,16 +142,11 @@ void SPI_flash_init(void)
     SYS->GPCMFP.SPI1_MOSI0=1;
 
     //NVIC.ICER/ICPR,disable interrupt and clear interrupt flag
-//	NVIC->ICER.SPI1_INT=1;
-//	NVIC->ICPR.SPI1_INT=1;
     NVIC_DisableIRQ(SPI1_IRQn);
     SPI1->CNTRL.IF = 1;
 
     DrvGPIO_SetBit (E_GPB,2);		//CSM=hight
 
-    //SPI set TX change at clk fall edge,RX at clk fall edge,
-    //8 bit length,receive ones,firse receive MSB,SCK is low level
-//	*(uint32_t*)(&SPI1->CNTRL)=(1<<TX_NEG)|(1<<RX_NEG)|(8<<TX_BIT_LEN)|(0<<TX_NUM)|(0<<LSB)|(0<<CLKP);
     SPI1->CNTRL.TX_NEG=1;
     SPI1->CNTRL.RX_NEG=1;
     SPI1->CNTRL.TX_BIT_LEN=8;
@@ -178,7 +157,7 @@ void SPI_flash_init(void)
     *(uint32_t*)(&SPI1->DMA)=0;			//disable PDMA
     SPI1->DIVIDER.DIVIDER=2;			//7.5MHz clock
 
-    tmp=Spi_read_status();
+    tmp=Spi_read_status();//读状态
 
     i=tmp;
     i&=0x01;
@@ -226,11 +205,8 @@ void SPI_flash_init(void)
 
 //===============================================================================
 //	finction	:Spi_ready
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-10-25 11:18
-//	modefy		:null
+//	description	:用于检测flash是否擦写完成
 //===============================================================================
 uint8_t Spi_ready(void)
 {
@@ -242,17 +218,13 @@ uint8_t Spi_ready(void)
 
 //===============================================================================
 //	finction	:Spi_erase
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-10-25 11:18
-//	modefy		:null
+//	description	:未使用到的驱动函数, 擦除SPI FLASH
 //===============================================================================
 void Spi_erase(void)
 {
     uint16_t i;
 
-    //time out 50ms max
     i=500;
     do {
         if(Spi_ready()==1)
@@ -281,14 +253,11 @@ void Spi_erase(void)
 }
 
 //===============================================================================
-//	finction	:Spi_write
-//	input		:null
-//	output		:null
-//	return		:null
+//	finction	:Spi_Page_Write
 //	edit		:sam 2012-10-25 11:18
-//	modefy		:null
+//	description	:按页写
 //===============================================================================
-void Spi_write(uint32_t page_address,uint8_t *buf)
+void Spi_Page_Write(uint32_t page_address,uint8_t *buf)
 {
     uint16_t i;
 
@@ -309,7 +278,7 @@ void Spi_write(uint32_t page_address,uint8_t *buf)
     Spi_send_byte(0x00);
     Spi_send_byte(0x00);
 
-    for(i=0; i<512; i++)
+    for(i=0; i<512; i++)//写一页的数据到spi flash
     {
         Spi_send_byte(*(buf+i));
     }
@@ -330,14 +299,11 @@ void Spi_write(uint32_t page_address,uint8_t *buf)
 }
 
 //===============================================================================
-//	finction	:Spi_read
-//	input		:null
-//	output		:null
-//	return		:null
+//	finction	:Spi_Page_Read
 //	edit		:sam 2012-10-25 11:18
 //	modefy		:null
 //===============================================================================
-void Spi_read(uint32_t page_address,uint8_t *buf)
+void Spi_Page_Read(uint32_t page_address,uint8_t *buf)
 {
     uint16_t i;
 
@@ -371,11 +337,13 @@ void Spi_read(uint32_t page_address,uint8_t *buf)
 //===================================================================================================================
 //===============================================================================
 //	finction	:Get_write_adds_struct_data
-//	input		:null
-//	output		:null
-//	return		:null
-//	edit		:sam 2012-8-5 17:32
-//	modefy		:null
+//	input		:select: 1-分析  2-校正  3-错误  4-报警
+//				:status:状态
+//              :Sresult:结果
+//              :unit:单位
+//              :YN:yes_or_no
+//              :signe:符号
+//	modefy		:将参数中的值写入Save_data结构体中
 //===============================================================================
 void Get_write_struct_data(uint8_t selset,uint8_t status,uint32_t Sresult,uint8_t unit,uint8_t YN,uint8_t signe)
 {
@@ -383,15 +351,16 @@ void Get_write_struct_data(uint8_t selset,uint8_t status,uint32_t Sresult,uint8_
 
     switch(selset)
     {
-    case 1:
-        if(Fenxi.xuhao_l==0xff)
+    case 1://分析
+		//序号自增
+        if(Fenxi.xuhao_l==0xff)//序号低位达到最大值, 高位进位, 低位清零
         {
             Fenxi.xuhao_l=0;
             Fenxi.xuhao_h+=1;
         }
         else
             Fenxi.xuhao_l+=1;
-
+		
         Fenxi.status=status;
 
         i=RTC_DATA.mouth_temp;
@@ -418,7 +387,7 @@ void Get_write_struct_data(uint8_t selset,uint8_t status,uint32_t Sresult,uint8_
         Fenxi.result_nh=Sresult>>8;
         Fenxi.result_nl=Sresult;
 
-        Fenxi.unit_alarm_wrong=unit;
+        Fenxi.unit_alarm_wrong = unit;
         Fenxi.yes_or_no=YN;
         Fenxi.signe_result=signe;
 
@@ -433,7 +402,7 @@ void Get_write_struct_data(uint8_t selset,uint8_t status,uint32_t Sresult,uint8_
         Fenxi.fenxi_fangfa=M_menur1_LZDJ_select_temp;
         Fenxi.fenxi_obj=M_menur1_analy_obj_select_temp;
         break;
-    case 2:
+    case 2://校正
         if(Jiaozheng.xuhao_l==0xff)
         {
             Jiaozheng.xuhao_l=0;
@@ -483,7 +452,7 @@ void Get_write_struct_data(uint8_t selset,uint8_t status,uint32_t Sresult,uint8_
         Jiaozheng.fenxi_fangfa=M_menur1_LZDJ_select_temp;
         Jiaozheng.fenxi_obj=M_menur1_analy_obj_select_temp;
         break;
-    case 3:
+    case 3://错误
         if(Cuowu.xuhao_l==0xff)
         {
             Cuowu.xuhao_l=0;
@@ -535,28 +504,10 @@ void Get_write_struct_data(uint8_t selset,uint8_t status,uint32_t Sresult,uint8_
         Cuowu.e2_result_pl=0;
         Cuowu.e2_result_nh=0;
         Cuowu.e2_result_nl=0;
-
-/////           Cuowu.result_ph=Sresult>>24;
-/////           Cuowu.result_pl=Sresult>>16;
-/////           Cuowu.result_nh=Sresult>>8;
-/////           Cuowu.result_nl=Sresult;
-/////           Cuowu.unit_alarm_wrong=unit;
-/////           Cuowu.yes_or_no=YN;
-/////           Cuowu.signe_result=signe;
-/////
-/////           Cuowu.e1_result_ph=e1_men_save>>24;
-/////           Cuowu.e1_result_pl=e1_men_save>>16;
-/////           Cuowu.e1_result_nh=e1_men_save>>8;
-/////           Cuowu.e1_result_nl=e1_men_save;
-/////           Cuowu.e2_result_ph=e2_men_save>>24;
-/////           Cuowu.e2_result_pl=e2_men_save>>16;
-/////           Cuowu.e2_result_nh=e2_men_save>>8;
-/////           Cuowu.e2_result_nl=e2_men_save;
-
         Cuowu.fenxi_fangfa=M_menur1_LZDJ_select_temp;
         Cuowu.fenxi_obj=M_menur1_analy_obj_select_temp;
         break;
-    case 4:
+    case 4://报警
         if(Baojing.xuhao_l==0xff)
         {
             Baojing.xuhao_l=0;
@@ -611,20 +562,16 @@ void Get_write_struct_data(uint8_t selset,uint8_t status,uint32_t Sresult,uint8_
 
 //===============================================================================
 //	finction	:Disp_sec_screen_data
-//      Detials		:显示第二屏历史记录
 //	input		:Save_data *point 数据结构
 //	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-8-20 16:23
-//	modefy		:null
+//	description	:显示分析,校正,报警,错误历史记录
 //===============================================================================
 void Disp_sec_screen_data(struct Save_data *point)
 {
     uint8_t	data_buff[16],j;
-    uint32_t disp_d,kk;
+    uint32_t disp_d = 0;
 
-    disp_d=kk=0;
     data_buff[0]='E';
     data_buff[1]='1';
     data_buff[2]=20;
@@ -633,20 +580,16 @@ void Disp_sec_screen_data(struct Save_data *point)
     data_buff[12]='M';
     data_buff[13]='V';
 
-    kk=(point->e1_result_ph)<<24;
-    disp_d+=kk;
-    kk=(point->e1_result_pl)<<16;
-    disp_d+=kk;
-    kk=(point->e1_result_nh)<<8;
-    disp_d+=kk;
-    kk=point->e1_result_nl;
-    disp_d+=kk;
+    disp_d+=((point->e1_result_ph)<<24);
+    disp_d+=((point->e1_result_pl)<<16);
+    disp_d+=((point->e1_result_nh)<<8);
+    disp_d+=point->e1_result_nl;
 
-    if(point->fenxi_fangfa!=2)
+    if(point->fenxi_fangfa!=2)//根据不同的分析方法计算disp_d的值
     {
         if(disp_d<31250)
         {
-            data_buff[3]=14;		//-
+            data_buff[3]=14;	//-
             disp_d=31250-disp_d;
         }
         else
@@ -658,44 +601,38 @@ void Disp_sec_screen_data(struct Save_data *point)
     }
     else
         disp_d=Float_to_int_reg_ee(disp_d);
-
-    j=disp_d>>28;
-    j&=0x0f;
+	/*--------------------------------*/
+    j=(disp_d>>28) & 0xf;
     if(j>=0x0a)
         j=0;
-
+	/*--------------------------------*/
     if(j==0)
         data_buff[4]=0;
     else
         data_buff[4]=Get_ascii_data(j);
-    j=disp_d>>24;
-    j&=0x0f;
+	/*--------------------------------*/
+    j=(disp_d>>24)&0xf;
     if((j==0)&&(data_buff[4]==0))
         data_buff[5]=0;
     else
         data_buff[5]=Get_ascii_data(j);
-    j=disp_d>>20;
-    j&=0x0f;
+	/*--------------------------------*/
+    j=(disp_d>>20)&0xf;
     if((j==0)&&(data_buff[4]==0)&&(data_buff[5]==0))
         data_buff[6]=0;
     else
         data_buff[6]=Get_ascii_data(j);
-    j=disp_d>>16;
-    j&=0x0f;
-    data_buff[7]=Get_ascii_data(j);
+	/*--------------------------------*/
+    data_buff[7]=Get_ascii_data((disp_d>>16) & 0xf);
     data_buff[8]=19;
-    j=disp_d>>12;
-    j&=0x0f;
-    data_buff[9]=Get_ascii_data(j);
-    j=disp_d>>8;
-    j&=0x0f;
-    data_buff[10]=Get_ascii_data(j);
+    data_buff[9]=Get_ascii_data((disp_d>>12) & 0xf);
+    data_buff[10]=Get_ascii_data((disp_d>>8)&0xf);
 
     for(j=0; j<14; j++)
         Get_6x8_char_single(5,j*6,data_buff[j]);		//line5
 
 //-----------------------------------------------------------
-    disp_d=kk=0;
+    
     data_buff[0]='E';
     data_buff[1]='2';
     data_buff[2]=20;
@@ -703,21 +640,17 @@ void Disp_sec_screen_data(struct Save_data *point)
     data_buff[11]=0;
     data_buff[12]='M';
     data_buff[13]='V';
-
-    kk=(point->e2_result_ph)<<24;
-    disp_d+=kk;
-    kk=(point->e2_result_pl)<<16;
-    disp_d+=kk;
-    kk=(point->e2_result_nh)<<8;
-    disp_d+=kk;
-    kk=point->e2_result_nl;
-    disp_d+=kk;
+	
+    disp_d = ((point->e2_result_ph)<<24);
+    disp_d+=((point->e2_result_pl)<<16);
+    disp_d+=((point->e2_result_nh)<<8);
+    disp_d+=point->e2_result_nl;
 
     if(point->fenxi_fangfa!=2)
     {
         if(disp_d<31250)
         {
-            data_buff[3]=14;		//-
+            data_buff[3]=14;	//-
             disp_d=31250-disp_d;
         }
         else
@@ -729,9 +662,8 @@ void Disp_sec_screen_data(struct Save_data *point)
     }
     else
         disp_d=Float_to_int_reg_ee(disp_d);
-
-    j=disp_d>>28;
-    j&=0x0f;
+	/*--------------------------------*/
+    j=(disp_d>>28)&0xf;
     if(j>=0x0a)
         j=0;
 
@@ -739,28 +671,24 @@ void Disp_sec_screen_data(struct Save_data *point)
         data_buff[4]=0;
     else
         data_buff[4]=Get_ascii_data(j);
-    j=disp_d>>24;
-    j&=0x0f;
+	/*--------------------------------*/
+    j=(disp_d>>24)&0xf;
     if((j==0)&&(data_buff[4]==0))
         data_buff[5]=0;
     else
         data_buff[5]=Get_ascii_data(j);
-    j=disp_d>>20;
-    j&=0x0f;
+	/*--------------------------------*/
+    j=(disp_d>>20) & 0xf;
     if((j==0)&&(data_buff[4]==0)&&(data_buff[5]==0))
         data_buff[6]=0;
     else
         data_buff[6]=Get_ascii_data(j);
-    j=disp_d>>16;
-    j&=0x0f;
+	/*--------------------------------*/
+    j=(disp_d>>16)&0xf;
     data_buff[7]=Get_ascii_data(j);
     data_buff[8]=19;
-    j=disp_d>>12;
-    j&=0x0f;
-    data_buff[9]=Get_ascii_data(j);
-    j=disp_d>>8;
-    j&=0x0f;
-    data_buff[10]=Get_ascii_data(j);
+    data_buff[9]=Get_ascii_data((disp_d>>12)&0xf);
+    data_buff[10]=Get_ascii_data((disp_d>>8)&0xf);
     for(j=0; j<14; j++)
         Get_6x8_char_single(6,j*6,data_buff[j]);		//line6
 }
@@ -770,44 +698,24 @@ void Disp_sec_screen_data(struct Save_data *point)
 //      Detials		:显示历史记录
 //	input		:select  1=分析，2=校正，3=错误，4=报警
 //                      :Save_data *point 数据结构
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-8-7 9:42
-//	modefy		:null
+//	description	:
 //===============================================================================
 void Disp_history_data(uint8_t select,struct Save_data *point)
 {
-    uint32_t	res,sub;
-    uint16_t	i;
+    uint32_t	res;
     uint8_t	data_buff[22],j,k;
-/////   uint8_t 	const *Adds_index;
-/////   uint8_t 	const *index;
 
     if(system_init_flag!=1)
     {
         LCD_disp_flag=1;
-////   Clear_screen();
-        Clear_n_page_ram(0,7);
-
-        i=point->disp_index;
-        j=i/10000;
-        j%=10;
-        data_buff[0]=Get_ascii_data(j);
-        i=point->disp_index;
-        j=i/1000;
-        j%=10;
-        data_buff[1]=Get_ascii_data(j);
-        i=point->disp_index;
-        j=i/100;
-        j%=10;
-        data_buff[2]=Get_ascii_data(j);
-        i=point->disp_index;
-        j=i/10;
-        j%=10;
-        data_buff[3]=Get_ascii_data(j);
-        i=point->disp_index;
-        j=i%10;
-        data_buff[4]=Get_ascii_data(j);
+        Clear_n_page_ram(0,7);//清屏
+		
+        data_buff[0]=Get_ascii_data(point->disp_index/10000%10);
+        data_buff[1]=Get_ascii_data(point->disp_index/1000%10);
+        data_buff[2]=Get_ascii_data(point->disp_index/100%10);
+        data_buff[3]=Get_ascii_data(point->disp_index/10%10);
+        data_buff[4]=Get_ascii_data(point->disp_index%10);
         data_buff[5]=20;
 
         if((select==1)||(select==2))
@@ -842,22 +750,11 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                         Disp_buff128x64[94]=0x44;
                         Disp_buff128x64[95]=0x38;
                     }
-/////               data_buff[7]=37;
-/////               data_buff[8]=38;
 
                     for(j=0; j<6; j++)
                         Get_6x8_char_single(0,j*6,data_buff[j]);		//line1
                     for(j=0; j<2; j++)
                         Get_16x16_char_single(0,j*12+36+24,data_buff[j+6]); 		//line1
-
-/////               Adds_index=TB_Lever1_menu+28;			        //char data
-/////               index= Lever1_menu_index+4;				//char num.
-/////
-/////     	       for(j=0;j<*index;j++)
-/////     	       {
-/////                   Get_16x16_char_single(0,j*12+78,*Adds_index);
-/////                   ++Adds_index;
-/////	       }
 
                     for(j=0; j<128; j++)				 	//line2
                         Disp_buff128x64[128+j]|=0x80;
@@ -869,36 +766,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                         Disp_buff128x64[128+j]|=k;
                     }
                 }
-//            else
-//            {
-//               if(j==6)
-//               {
-//                  data_buff[6]='M';				//hand
-//                  data_buff[7]='A';
-//                  data_buff[8]='N';
-//                  data_buff[9]=0;
-//               }
-//               else
-//               {
-//                  data_buff[6]='A';				//auto
-//                  data_buff[7]='U';
-//                  data_buff[8]='T';
-//                  data_buff[9]='O';
-//               }
-//               for(j=0;j<10;j++)
-//                  Get_6x8_char_single(0,j*6,data_buff[j]);		//line1
-//
-///////               index= Lever1_en_menu_index+4;
-///////               j=64;
-///////     	       for(k=0;k<*index;k++)
-///////     	       {
-///////                   Adds_index=Lever1_en_menu_char+j;
-///////                   Get_6x8_char_single(0,k*6+86,*Adds_index);
-///////                   ++j;
-///////               }
-//               for(j=0;j<128;j++)				 	//line2
-//                  Disp_buff128x64[128+j]=0x10;
-//            }
             }
             else  //分析
             {
@@ -921,23 +788,10 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                         Disp_buff128x64[94]=0x44;
                         Disp_buff128x64[95]=0x38;
                     }
-//            	      else
-//            	      {
-//            	         data_buff[6]='M';
-//            	         data_buff[7]='A';
-//            	         data_buff[8]='N';
-//            	         data_buff[9]=19;
-//            	         data_buff[10]=0;
-//            	         data_buff[11]='A';
-//            	         data_buff[12]='N';
-//            	         data_buff[13]='A';
-//            	      }
                     break;
                 case 2:	//hand hc
                     if(M_menur1_language_select_temp==2)
                     {
-//            	         data_buff[6]=22;
-//            	         data_buff[7]=36;
                         data_buff[6]=209;				//hand 	//维护
                         data_buff[7]=210;
                         data_buff[8]=39;
@@ -950,17 +804,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                         Disp_buff128x64[94]=0x44;
                         Disp_buff128x64[95]=0x38;
                     }
-//            	      else
-//            	      {
-//            	         data_buff[6]='M';
-//            	         data_buff[7]='A';
-//            	         data_buff[8]='N';
-//            	         data_buff[9]=19;
-//            	         data_buff[10]=0;
-//            	         data_buff[11]='C';
-//            	         data_buff[12]='H';
-//            	         data_buff[13]='K';
-//            	      }
                     break;
                 case 3:	//auto fx
                     if(M_menur1_language_select_temp==2)
@@ -970,23 +813,10 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                         data_buff[8]=16;
                         data_buff[9]=17;
                     }
-//            	      else
-//            	      {
-//            	         data_buff[6]='A';
-//            	         data_buff[7]='U';
-//            	         data_buff[8]='T';
-//            	         data_buff[9]='O';
-//            	         data_buff[10]=0;
-//            	         data_buff[11]='A';
-//            	         data_buff[12]='N';
-//            	         data_buff[13]='A';
-//            	      }
                     break;
                 case 4:	//auto hc
                     if(M_menur1_language_select_temp==2)
                     {
-                        //data_buff[6]=35;
-                        //data_buff[7]=36;
                         data_buff[6]=41;		//标样核查
                         data_buff[7]=55;
                         data_buff[8]=39;
@@ -1002,17 +832,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                         Disp_buff128x64[124]=0x44;
                         Disp_buff128x64[125]=0x38;
                     }
-//            	      else
-//            	      {
-//            	         data_buff[6]='A';
-//            	         data_buff[7]='U';
-//            	         data_buff[8]='T';
-//            	         data_buff[9]='O';
-//            	         data_buff[10]=0;
-//            	         data_buff[11]='C';
-//            	         data_buff[12]='H';
-//            	         data_buff[13]='K';
-//            	      }
                     break;
                 case 5:	//auto xs
                     if(M_menur1_language_select_temp==2)
@@ -1022,17 +841,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                         data_buff[8]=67;
                         data_buff[9]=68;
                     }
-//            	      else
-//            	      {
-//            	         data_buff[6]='A';
-//            	         data_buff[7]='U';
-//            	         data_buff[8]='T';
-//            	         data_buff[9]='O';
-//            	         data_buff[10]=0;
-//            	         data_buff[11]='D';
-//            	         data_buff[12]='I';
-//            	         data_buff[13]='L';
-//            	      }
                     break;
                 case 6:	//hand jz
                     if(M_menur1_language_select_temp==2)
@@ -1050,17 +858,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                         Disp_buff128x64[94]=0x44;
                         Disp_buff128x64[95]=0x38;
                     }
-//            	      else
-//            	      {
-//            	         data_buff[6]='M';
-//            	         data_buff[7]='A';
-//            	         data_buff[8]='N';
-//            	         data_buff[9]=19;
-//            	         data_buff[10]=0;
-//            	         data_buff[11]='C';
-//            	         data_buff[12]='A';
-//            	         data_buff[13]='L';
-//            	      }
                     break;
                 case 0:
                     data_buff[6]=0;
@@ -1082,15 +879,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                     for(j=0; j<2; j++)
                         Get_16x16_char_single(0,j*12+36+24,data_buff[j+6]); 	//line1
 
-/////               Adds_index=TB_Lever1_menu+28;			        //char data
-/////               index= Lever1_menu_index+4;				//char num.
-/////
-/////     	       for(j=0;j<*index;j++)
-/////     	       {
-/////                   Get_16x16_char_single(0,j*12+78,*Adds_index);
-/////                   ++Adds_index;
-/////	       }
-
                     for(j=0; j<128; j++)				 	//line2
                         Disp_buff128x64[128+j]|=0x80;
                     for(j=0; j<36; j++)
@@ -1101,161 +889,69 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                         Disp_buff128x64[128+j]|=k;
                     }
                 }
-//            else
-//            {
-//               for(j=0;j<14;j++)
-//                  Get_6x8_char_single(0,j*6,data_buff[j]);		//line1
-//
-///////               index= Lever1_en_menu_index+4;
-///////               j=64;
-///////     	       for(k=0;k<*index;k++)
-///////     	       {
-///////                   Adds_index=Lever1_en_menu_char+j;
-///////                   Get_6x8_char_single(0,k*6+86,*Adds_index);
-///////                   ++j;
-///////               }
-//               for(j=0;j<128;j++)				 	//line2
-//                  Disp_buff128x64[128+j]=0x10;
-//            }
             }
-/////       for(j=0;j<128;j++)				 	//line2
-/////           Disp_buff128x64[128+j]=0x10;
-            //---------------------------------------------------------
-            j=point->year_h;
-            j=j>>4;
-            j&=0x0f;
-            data_buff[9]=Get_ascii_data(j);
-            j=point->year_h;
-            j&=0x0f;
-            data_buff[10]=Get_ascii_data(j);
-            j=point->year_l;
-            j=j>>4;
-            j&=0x03;
-            data_buff[11]=Get_ascii_data(j);
-            j=point->year_l;
-            j&=0x0f;
-            data_buff[12]=Get_ascii_data(j);
-            data_buff[13]=14;
-            j=point->munth;
-            j=j>>4;
-            j&=0x01;
-            data_buff[14]=Get_ascii_data(j);
-            j=point->munth;
-            j&=0x0f;
-            data_buff[15]=Get_ascii_data(j);
-            data_buff[16]=14;
-            j=point->day;
-            j=j>>4;
-            j&=0x03;
-            data_buff[17]=Get_ascii_data(j);
-            j=point->day;
-            j&=0x0f;
-            data_buff[18]=Get_ascii_data(j);
-            data_buff[5]=data_buff[6]=data_buff[7]=data_buff[8]=0;
-            j=point->hour;
-            j=j>>4;
-            j&=0x03;
-            data_buff[0]=Get_ascii_data(j);
-            j=point->hour;
-            j&=0x0f;
-            data_buff[1]=Get_ascii_data(j);
-            data_buff[2]=20;
-            j=point->minu;
-            j=j>>4;
-            j&=0x07;
-            ////j&=0x00;
-            data_buff[3]=Get_ascii_data(j);
-            j=point->minu;
-            j&=0x0f;
-            ////j&=0x00;
-            data_buff[4]=Get_ascii_data(j);
 
-////       Display_8x16_char(2,0,16,data_buff);		//line2
+            //---------------------------------------------------------
+            data_buff[9]=Get_ascii_data((point->year_h>>4) & 0xf);
+            data_buff[10]=Get_ascii_data((point->year_h) & 0xf);
+            data_buff[11]=Get_ascii_data((point->year_l>>4)&0xf);
+            data_buff[12]=Get_ascii_data(point->year_l&0xf);
+            data_buff[13]=14;
+            data_buff[14]=Get_ascii_data((point->munth>>4) & 0x1);
+            data_buff[15]=Get_ascii_data(point->munth&0xf);
+            data_buff[16]=14;
+            data_buff[17]=Get_ascii_data((point->day>>4)&0x3);
+            data_buff[18]=Get_ascii_data(point->day&0xf);
+            data_buff[5]=data_buff[6]=data_buff[7]=data_buff[8]=0;
+            data_buff[0]=Get_ascii_data((point->hour>>4)&0x3);
+            data_buff[1]=Get_ascii_data(point->hour&0xf);
+            data_buff[2]=20;
+            data_buff[3]=Get_ascii_data((point->minu>>4)&0x7);
+            data_buff[4]=Get_ascii_data(point->minu&0xf);
             for(j=0; j<19; j++)
                 Get_6x8_char_single(2,j*6,data_buff[j]);		//line3
 
 //---------------------------------------------------------
-/////       data_buff[0]='R';
-/////       data_buff[1]='S';
-/////       data_buff[2]=20;
+
             data_buff[0]=0;
             data_buff[1]=0;
             data_buff[2]=0;
             data_buff[3]=0;
-/////       j=point->signe_result;
-/////       if(j==1)
-/////          data_buff[3]=0;
-/////       else
-/////          data_buff[3]=14;
-
-            res=0;
             res=(point->result_ph)<<24;
-            sub=0;
-            sub=(point->result_pl)<<16;
-            res|=sub;
-            sub=0;
-            sub=(point->result_nh)<<8;
-            res|=sub;
-            sub=0;
-            sub=(point->result_nl);
-            res|=sub;
+            res|=(point->result_pl)<<16;
+            res|=(point->result_nh)<<8;
+            res|=(point->result_nl);
 
-            j=point->result_ph;
-            j=j>>4;
-            j&=0x0f;
+            j=(point->result_ph>>4)&0xf;
             if(j==0)
                 data_buff[4]=0;
             else
                 data_buff[4]=Get_ascii_data(j);
-            j=point->result_ph;
-            j&=0x0f;
+			
+            j=point->result_ph & 0xf;
             if((j==0)&&(data_buff[4]==0))
                 data_buff[5]=0;
             else
                 data_buff[5]=Get_ascii_data(j);
-            j=point->result_pl;
-            j=j>>4;
-            j&=0x0f;
+			
+            j=(point->result_pl >> 4)& 0xf;
             if((j==0)&&(data_buff[4]==0)&&(data_buff[5]==0))
                 data_buff[6]=0;
             else
                 data_buff[6]=Get_ascii_data(j);
-            j=point->result_pl;
-            j&=0x0f;
-            data_buff[7]=Get_ascii_data(j);
+			
+            data_buff[7]=Get_ascii_data(point->result_pl & 0xf);
             data_buff[8]=19;
-            j=point->result_nh;
-            j=j>>4;
-            j&=0x0f;
-            data_buff[9]=Get_ascii_data(j);
-            j=point->result_nh;
-            j&=0x0f;
-            data_buff[10]=Get_ascii_data(j);
-            j=point->result_nl;
-            j=j>>4;
-            j&=0x0f;
-            data_buff[11]=Get_ascii_data(j);
-            j=point->result_nl;
-            j&=0x0f;
-            data_buff[12]=Get_ascii_data(j);
-
-//     	switch(M_menur1_dot_num_select_temp)
-//     	{
-//     	   case 1:
-//     	       data_buff[10]=data_buff[11]=0;
-//     	   break;
-//     	   case 2:
-//     	       data_buff[11]=0;
-//     	   break;
-//     	}
+            data_buff[9]=Get_ascii_data((point->result_nh>>4)&0xf);
+            data_buff[10]=Get_ascii_data(point->result_nh&0xf);
+            data_buff[11]=Get_ascii_data((point->result_nl>>4)&0xf);
+            data_buff[12]=Get_ascii_data(point->result_nl&0xf);
 
             if(select==2)
             {
-//           data_buff[12]=0;
                 data_buff[13]=0;
                 data_buff[14]=0;
                 data_buff[15]=0;
-////           Display_8x16_char(4,0,14,data_buff);		//line3
             }
             else
             {
@@ -1283,7 +979,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                     data_buff[16]=0;
                     break;
                 }
-////           Display_8x16_char(4,0,14,data_buff);		//line3
             }
             for(j=0; j<4; j++)
                 Get_6x8_char_single(4,j*6,data_buff[j]);
@@ -1318,11 +1013,7 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
             }
             //---------------------------------------------------------
             j=point->yes_or_no;
-/////       data_buff[0]='R';
-/////       data_buff[1]='E';
-/////       data_buff[2]='S';
-/////       data_buff[3]='U';
-/////       data_buff[4]=20;
+//
             data_buff[0]=0;
             data_buff[1]=0;
             data_buff[2]=0;
@@ -1335,70 +1026,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
             data_buff[9]=0;
             data_buff[10]=0;
 
-//       if(j==0)
-//       {
-//          if(M_menur1_language_select_temp==2)
-//          {
-///////       	     data_buff[0]=207;
-///////       	     data_buff[1]=208;
-///////       	     data_buff[2]=209;
-///////       	     data_buff[3]=210;
-///////       	     data_buff[4]=0;
-//       	     data_buff[5]=0;
-//          }
-//          else
-//          {
-///////             data_buff[5]='N';
-///////             data_buff[6]='O';
-///////             data_buff[7]='R';
-///////             data_buff[8]='M';
-///////             data_buff[9]='A';
-///////       	     data_buff[10]='L';
-//             data_buff[5]=0;
-//             data_buff[6]=0;
-//             data_buff[7]=0;
-//             data_buff[8]=0;
-//             data_buff[9]=0;
-//       	     data_buff[10]=0;
-//          }
-//       }
-//       else if(j==1)
-//       {
-//          if(M_menur1_language_select_temp==2)
-//          {
-///////       	     data_buff[0]=205;
-///////       	     data_buff[1]=206;
-///////       	     data_buff[2]=207;
-///////       	     data_buff[3]=208;
-///////       	     data_buff[4]=209;
-//       	     data_buff[5]=0;
-//          }
-//          else
-//          {
-///////             data_buff[5]='U';
-///////             data_buff[6]='N';
-///////             data_buff[7]=14;
-///////             data_buff[8]='N';
-///////             data_buff[9]='O';
-///////       	     data_buff[10]='R';
-//             data_buff[5]=0;
-//             data_buff[6]=0;
-//             data_buff[7]=0;
-//             data_buff[8]=0;
-//             data_buff[9]=0;
-//       	     data_buff[10]=0;
-//          }
-//       }
-//       else
-//       {
-//       	  data_buff[5]=0;
-//       	  data_buff[6]=0;
-//       	  data_buff[7]=0;
-//       	  data_buff[8]=0;
-//       	  data_buff[9]=0;
-//       	  data_buff[10]=0;
-//       }
-//////       Display_8x16_char(6,0,6,data_buff);			//line4
             for(j=0; j<11; j++)
                 Get_6x8_char_single(7,j*6,data_buff[j]);
 
@@ -1409,7 +1036,7 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
             data_buff[4]='N';
             data_buff[5]=18;
             data_buff[6]='Y';
-////       Display_8x16_char_DEL(6,72,7,data_buff,1);		//line4
+
             for(j=0; j<7; j++)
                 Get_6x8_char_single(7,j*6+86,data_buff[j]);
 
@@ -1421,16 +1048,16 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
             switch(Menu_index_finc_select)
             {
             case 1:
-                Disp_sec_screen_data(&Fenxi);
+                Disp_sec_screen_data(&Fenxi);//分析
                 break;
             case 2:
-                Disp_sec_screen_data(&Jiaozheng);
+                Disp_sec_screen_data(&Jiaozheng);//校正
                 break;
             case 3:
-                Disp_sec_screen_data(&Baojing);
+                Disp_sec_screen_data(&Baojing);//报警
                 break;
             case 4:
-                Disp_sec_screen_data(&Cuowu);
+                Disp_sec_screen_data(&Cuowu);//错误
                 break;
             }
         }
@@ -1438,68 +1065,25 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
         {
             for(j=0; j<6; j++)
                 Get_6x8_char_single(0,j*6,data_buff[j]);		//line1
-/////       if(M_menur1_language_select_temp!=2)
-/////       {
-/////           index= Lever1_en_menu_index+4;
-/////           j=64;
-/////           for(k=0;k<*index;k++)
-/////           {
-/////               Adds_index=Lever1_en_menu_char+j;
-/////               Get_6x8_char_single(0,k*6+86,*Adds_index);
-/////               ++j;
-/////           }
-/////       }
-            //---------------------------------------------------------
-            j=point->year_h;
-            j=j>>4;
-            j&=0x0f;
-            data_buff[9]=Get_ascii_data(j);
-            j=point->year_h;
-            j&=0x0f;
-            data_buff[10]=Get_ascii_data(j);
-            j=point->year_l;
-            j=j>>4;
-            j&=0x03;
-            data_buff[11]=Get_ascii_data(j);
-            j=point->year_l;
-            j&=0x0f;
-            data_buff[12]=Get_ascii_data(j);
-            data_buff[13]=14;
-            j=point->munth;
-            j=j>>4;
-            j&=0x01;
-            data_buff[14]=Get_ascii_data(j);
-            j=point->munth;
-            j&=0x0f;
-            data_buff[15]=Get_ascii_data(j);
-            data_buff[16]=14;
-            j=point->day;
-            j=j>>4;
-            j&=0x03;
-            data_buff[17]=Get_ascii_data(j);
-            j=point->day;
-            j&=0x0f;
-            data_buff[18]=Get_ascii_data(j);
-            data_buff[5]=data_buff[6]=data_buff[7]=data_buff[8]=0;
-            j=point->hour;
-            j=j>>4;
-            j&=0x03;
-            data_buff[0]=Get_ascii_data(j);
-            j=point->hour;
-            j&=0x0f;
-            data_buff[1]=Get_ascii_data(j);
-            data_buff[2]=20;
-            j=point->minu;
-            j=j>>4;
-            ////j&=0x07;
-            j&=0x00;
-            data_buff[3]=Get_ascii_data(j);
-            j=point->minu;
-            ////j&=0x0f;
-            j&=0x00;
-            data_buff[4]=Get_ascii_data(j);
 
-////       Display_8x16_char(2,0,16,data_buff);		//line2
+            //---------------------------------------------------------
+			data_buff[0]=Get_ascii_data((point->hour>>4) & 0x03);
+            data_buff[1]=Get_ascii_data(point->hour & 0xf);
+            data_buff[2]=20;
+            data_buff[3]=Get_ascii_data((point->minu>>4)&0x00);
+            data_buff[4]=Get_ascii_data(point->minu&0x00);
+            data_buff[5]=data_buff[6]=data_buff[7]=data_buff[8]=0;
+			data_buff[9]=Get_ascii_data((point->year_h>>4) & 0xf);
+            data_buff[10]=Get_ascii_data((point->year_h) & 0xf);
+            data_buff[11]=Get_ascii_data((point->year_l>>4)&0xf);
+            data_buff[12]=Get_ascii_data(point->year_l&0xf);
+            data_buff[13]=14;
+            data_buff[14]=Get_ascii_data((point->munth>>4) & 0x1);
+            data_buff[15]=Get_ascii_data(point->munth&0xf);
+            data_buff[16]=14;
+            data_buff[17]=Get_ascii_data((point->day>>4)&0x3);
+            data_buff[18]=Get_ascii_data(point->day&0xf);
+
             for(j=0; j<19; j++)
                 Get_6x8_char_single(2,j*6,data_buff[j]);		//line3
 //---------------------------------------------------------
@@ -1520,14 +1104,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                     Disp_buff128x64[94]=0x44;
                     Disp_buff128x64[95]=0x38;
                 }
-                //else
-                //{
-                //   data_buff[3]='E';
-                //   data_buff[4]='R';
-                //   data_buff[5]='R';
-                //   data_buff[6]='O';
-                //   data_buff[7]='R';
-                //}
             }
             else					//alarm
             {
@@ -1536,27 +1112,11 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                     data_buff[3]=89;
                     data_buff[4]=90;
                 }
-                //else
-                //{
-                //   data_buff[3]='A';
-                //   data_buff[4]='L';
-                //   data_buff[5]='A';
-                //   data_buff[6]='R';
-                //   data_buff[7]='M';
-                //}
             }
             data_buff[8]=0;
-            j=point->unit_alarm_wrong;
-            j=j>>8;
-            j&=0x0f;
-            data_buff[9]=Get_ascii_data(j);
-            j=point->unit_alarm_wrong;
-            j=j>>4;
-            j&=0x0f;
-            data_buff[10]=Get_ascii_data(j);
-            j=point->unit_alarm_wrong;
-            j&=0x0f;
-            data_buff[11]=Get_ascii_data(j);
+            data_buff[9]=Get_ascii_data((point->unit_alarm_wrong>>8)&0xf);
+            data_buff[10]=Get_ascii_data((point->unit_alarm_wrong>>4)&0xf);
+            data_buff[11]=Get_ascii_data(point->unit_alarm_wrong&0xf);
 
             if(M_menur1_language_select_temp==2)
             {
@@ -1568,13 +1128,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                 for(j=0; j<3; j++)
                     Get_8x16_char_single(4,60+j*10,data_buff[j+9]);
 
-/////           Adds_index=TB_Lever1_menu+28;			        //char data
-/////           index= Lever1_menu_index+4;				//char num.
-/////     	   for(j=0;j<*index;j++)
-/////     	   {
-/////               Get_16x16_char_single(0,j*12+78,*Adds_index);
-/////               ++Adds_index;
-/////	   }
                 for(j=0; j<128; j++)				 	//line2
                     Disp_buff128x64[128+j]|=0x80;
 
@@ -1603,13 +1156,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
                     Disp_buff128x64[128+j]|=0x10;
             }
 //---------------------------------------------------------
-/////       data_buff[0]='R';
-/////       data_buff[1]='E';
-/////       data_buff[2]='S';
-/////       data_buff[3]='U';
-/////       data_buff[4]=20;
-/////       for(j=0;j<5;j++)
-/////          Get_6x8_char_single(7,j*6,data_buff[j]);
 
             data_buff[0]='D';
             data_buff[1]='E';
@@ -1618,7 +1164,6 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
             data_buff[4]='N';
             data_buff[5]=18;
             data_buff[6]='Y';
-/////       Display_8x16_char_DEL(6,72,7,data_buff,1);		//line4
             for(j=0; j<7; j++)
                 Get_6x8_char_single(7,j*6+86,data_buff[j]);
 
@@ -1633,23 +1178,20 @@ void Disp_history_data(uint8_t select,struct Save_data *point)
 
 //===============================================================================
 //	finction	:Write_index_adds_point
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-8-17 10:25
-//	modefy		:null
+//	description	:初始化buff_page_w的值,并写入flash
+//              :buff_page_w中保存了分析/校正/错误/报警 历史记录的读写地址
 //===============================================================================
 void Write_index_adds_point(void)
 {
     uint32_t	k,adds_a,adds_b;;
 
-    Buff_get_reg_32bit_data(0,0xCCCCCCCC);
-    Buff_get_reg_32bit_data(4,FX_write_index_adds_point);
+    Buff_get_reg_32bit_data(0,0xCCCCCCCC);               //buff_page_w 0-3
+    Buff_get_reg_32bit_data(4,FX_write_index_adds_point);//buff_page_w 4-7
 
-    adds_a=adds_b=FX_write_index_adds_point;
-    adds_b&=0x000001ff;
-    adds_a>>=16;
-    adds_a&=0x0000ffff;				//page adds
+    adds_b=FX_write_index_adds_point & 0x000001ff;
+    adds_a=(FX_write_index_adds_point >> 16) & 0xffff;//page adds
+	
     if(adds_b==0x00000000)
     {
         adds_b=0x000001e0;
@@ -1659,14 +1201,13 @@ void Write_index_adds_point(void)
         adds_b-=0x20;
 
     adds_a<<=16;
-    FX_read_index_adds_point=adds_a+adds_b;
-    Buff_get_reg_32bit_data(8,FX_read_index_adds_point);
+    FX_read_index_adds_point = adds_a + adds_b;
+    Buff_get_reg_32bit_data(8,FX_read_index_adds_point);//buff_page_w 8-11
 //----------------------
     Buff_get_reg_32bit_data(12,JZ_write_index_adds_point);
     adds_a=adds_b=JZ_write_index_adds_point;
-    adds_b&=0x000001ff;
-    adds_a>>=16;
-    adds_a&=0x0000ffff;				//page adds
+    adds_b = JZ_write_index_adds_point & 0x000001ff;
+    adds_a = (JZ_write_index_adds_point >> 16) & 0xffff;//page adds
     if(adds_b==0x00000000)
     {
         adds_b=0x000001e0;
@@ -1721,22 +1262,19 @@ void Write_index_adds_point(void)
     Buff_get_reg_32bit_data(44,k);
     buff_page_w[49]=k2_signe_flag;
 
-    Spi_write(FIRST_REG_PAGE,buff_page_w);					//write system reg page0
+    Spi_Page_Write(FIRST_REG_PAGE,buff_page_w);					//write system reg page0
     DrvSYS_Delay(50000);
 }
 
 //===============================================================================
 //	finction	:Write_result_to_flah
-//	input		:null
-//	output		:null
-//	return		:null
+//  return      :地址
 //	edit		:sam 2012-10-25 16:44
-//	modefy		:null
+//	description	:将Save_data中的数据,写入Flash当中
 //===============================================================================
 uint32_t Write_result_to_flash(uint32_t adds_temp,struct Save_data *point)
 {
     uint32_t adds_a,adds_b,updata_adds;
-//    uint16_t i;
 
     e1_men_save=e2_men_save=0;
 re_write_adds:
@@ -1744,8 +1282,8 @@ re_write_adds:
     adds_b&=0x000001ff;		//byte adds
     adds_a>>=16;
     adds_a&=0x0000ffff;		//page adds
-    //delay 30ms
-    Spi_read(adds_a,buff_page);
+	
+    Spi_Page_Read(adds_a,buff_page);
 
     buff_page[adds_b+0]=point->xuhao_h;
     buff_page[adds_b+1]=point->xuhao_l;
@@ -1775,7 +1313,7 @@ re_write_adds:
     buff_page[adds_b+24]=point->fenxi_fangfa;
     buff_page[adds_b+25]=point->fenxi_obj;
 
-    Spi_write(adds_a,buff_page);
+    Spi_Page_Write(adds_a,buff_page);
 
     if(adds_b==0x000001e0)
     {
@@ -1823,45 +1361,34 @@ re_write_adds:
 
 //===============================================================================
 //	finction	:Write_error_status
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2013-7-12 10:10
-//	modefy		:null
+//	description	:CW_write_index_adds_point 地址变更
 //===============================================================================
 void Write_error_status(void)
 {
-    uint32_t Sub_adds;
-
-    Sub_adds=Write_result_to_flash(CW_write_index_adds_point,&Cuowu);
-    CW_write_index_adds_point=Sub_adds;
+    CW_write_index_adds_point = Write_result_to_flash(CW_write_index_adds_point,&Cuowu);
     Write_index_adds_point();
 }
 
 //===============================================================================
 //	finction	:Read_result_from_flash
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-8-6 15:01
-//	modefy		:null
+//  input       :select  1=分析，2=校正，3=错误，4=报警
+//	description	:从flash中读取历史数据,并显示出来
 //===============================================================================
 void Read_result_from_flash(uint8_t select)
 {
     uint32_t adds_a,adds_b;
-    uint16_t rt_cnt;
-    uint8_t i,z_cnt;
+    uint16_t rt_cnt = 0;
+    uint8_t i,z_cnt = 0;
     float j;
 
-    rt_cnt=0;
-    z_cnt=0;
     switch(select)
     {
     case 1:
 sub_case11:
         if((Fenxi.disp_index)<=1)
         {
-//    	        adds_a=adds_b=FX_read_index_adds_point=FX_write_index_adds_point;
             adds_a=adds_b=FX_disp_read_index_adds_point=FX_write_index_adds_point;
             Fenxi.disp_index=1;
             Jiaozheng.disp_index=1;
@@ -1913,7 +1440,7 @@ sub_case1:
             }
         }
 
-        Spi_read(adds_a,buff_page);
+        Spi_Page_Read(adds_a,buff_page);
 
         if(system_init_flag==1)
         {
@@ -1968,17 +1495,6 @@ sub_case1:
                 goto sub_case1;
         }
 
-//            if(M_menur1_ZDXS_select_temp==1)		//select auto xishi data disp
-//            {
-//               if(Fenxi.status!=5)
-//               {
-//                   if(FX_disp_read_index_adds_point!=0x00040000)
-//                   {
-//                      WDT_CLR();
-//                      goto  sub_case1;
-//                   }
-//               }
-//            }
 
         Disp_history_data(select,&Fenxi);
         break;
@@ -2031,7 +1547,7 @@ sub_case2:
                 adds_b-=0x20;
         }
 
-        Spi_read(adds_a,buff_page);
+        Spi_Page_Read(adds_a,buff_page);
 
         if(system_init_flag==1)
         {
@@ -2179,7 +1695,7 @@ sub_case3:
                 adds_b-=0x20;
         }
 
-        Spi_read(adds_a,buff_page);
+        Spi_Page_Read(adds_a,buff_page);
 
         if(system_init_flag==1)
         {
@@ -2280,7 +1796,7 @@ sub_case4:
                 adds_b-=0x20;
         }
 
-        Spi_read(adds_a,buff_page);
+        Spi_Page_Read(adds_a,buff_page);
 
         if(system_init_flag==1)
         {
@@ -2336,11 +1852,8 @@ sub_case4:
 
 //===============================================================================
 //	finction	:Read_result_from_flash_index_up
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-8-6 15:01
-//	modefy		:null
+//	description	:当在历史记录界面检测到按上下键时,从flash中读取上一个历史记录并显示出来
 //===============================================================================
 void Read_result_from_flash_index_up(uint8_t select)
 {
@@ -2356,7 +1869,6 @@ sub_case1:
         {
             if(Fenxi.disp_index==1)
             {
-//                   adds_a=adds_b=FX_disp_read_index_adds_point=FX_read_index_adds_point;
                 adds_a=adds_b=FX_disp_read_index_adds_point;
                 adds_b&=0x000001ff;				//byte adds
                 adds_a>>=16;
@@ -2370,11 +1882,8 @@ sub_case1:
             }
             else if(Fenxi.disp_index==0)
             {
-//		   if(M_menur1_ZDXS_select_temp!=1)
-//		   {
                 Fenxi.disp_index=Fenxi.xuhao_h<<8;
                 Fenxi.disp_index+=Fenxi.xuhao_l;
-//		   }
                 if(Fenxi.disp_index==0)
                 {
                     Fenxi.disp_index=1;
@@ -2396,7 +1905,6 @@ sub_case1:
                 j=Fenxi.xuhao_h;
                 j<<=8;
                 j+=Fenxi.xuhao_l;
-/////		    j&=0x0fff;
                 Fenxi.disp_index=j;
             }
             else
@@ -2460,7 +1968,7 @@ sub_case1_1:
                 adds_b+=0x20;
         }
 
-        Spi_read(adds_a,buff_page);
+        Spi_Page_Read(adds_a,buff_page);
 
         if(system_init_flag==1)
         {
@@ -2510,14 +2018,6 @@ sub_case1_1:
                     goto sub_case1;
             }
         }
-//            if(M_menur1_ZDXS_select_temp==1)		//select auto xishi data disp
-//            {
-//               if(Fenxi.status!=5)
-//               {
-//                   WDT_CLR();
-//                   goto  sub_case1;
-//               }
-//            }
         Disp_history_data(select,&Fenxi);
         break;
     case 2:
@@ -2526,7 +2026,6 @@ sub_case2:
         {
             if(Jiaozheng.disp_index==1)
             {
-////                   adds_a=adds_b=JZ_disp_read_index_adds_point=JZ_read_index_adds_point;
                 adds_a=adds_b=JZ_disp_read_index_adds_point;
                 adds_b&=0x000001ff;				//byte adds
                 adds_a>>=16;
@@ -2562,7 +2061,6 @@ sub_case2:
                 j=Jiaozheng.xuhao_h;
                 j<<=8;
                 j+=Jiaozheng.xuhao_l;
-/////		    j&=0x0fff;
                 Jiaozheng.disp_index=j;
             }
             else
@@ -2580,7 +2078,6 @@ sub_case2:
                         j=Jiaozheng.xuhao_h;
                         j<<=8;
                         j+=Jiaozheng.xuhao_l;
-/////		           j&=0x0fff;
                         Jiaozheng.disp_index=j;
                     }
                 }
@@ -2604,7 +2101,6 @@ sub_case2_1:
                 j=Jiaozheng.xuhao_h;
                 j<<=8;
                 j+=Jiaozheng.xuhao_l;
-/////		    j&=0x0fff;
                 Jiaozheng.disp_index=j;
             }
             else if(adds_b==0x000001e0)
@@ -2618,7 +2114,6 @@ sub_case2_1:
                     j=Jiaozheng.xuhao_h;
                     j<<=8;
                     j+=Jiaozheng.xuhao_l;
-/////		       j&=0x0fff;
                     Jiaozheng.disp_index=j;
                 }
             }
@@ -2626,7 +2121,7 @@ sub_case2_1:
                 adds_b+=0x20;
         }
 
-        Spi_read(adds_a,buff_page);
+        Spi_Page_Read(adds_a,buff_page);
 
         if(system_init_flag==1)
         {
@@ -2685,7 +2180,6 @@ sub_case3:
         {
             if(Cuowu.disp_index==1)
             {
-////                   adds_a=adds_b=CW_disp_read_index_adds_point=CW_read_index_adds_point;
                 adds_a=adds_b=CW_disp_read_index_adds_point;
                 adds_b&=0x000001ff;				//byte adds
                 adds_a>>=16;
@@ -2785,7 +2279,7 @@ sub_case3_1:
                 adds_b+=0x20;
         }
 
-        Spi_read(adds_a,buff_page);
+        Spi_Page_Read(adds_a,buff_page);
 
         if(system_init_flag==1)
         {
@@ -2844,7 +2338,6 @@ sub_case4:
         {
             if(Baojing.disp_index==1)
             {
-////                   adds_a=adds_b=BJ_disp_read_index_adds_point=BJ_read_index_adds_point;
                 adds_a=adds_b=BJ_disp_read_index_adds_point;
                 adds_b&=0x000001ff;				//byte adds
                 adds_a>>=16;
@@ -2880,7 +2373,6 @@ sub_case4:
                 j=Baojing.xuhao_h;
                 j<<=8;
                 j+=Baojing.xuhao_l;
-/////		    j&=0x0fff;
                 Baojing.disp_index=j;
             }
             else
@@ -2922,7 +2414,6 @@ sub_case4_1:
                 j=Baojing.xuhao_h;
                 j<<=8;
                 j+=Baojing.xuhao_l;
-/////		    j&=0x0fff;
                 Baojing.disp_index=j;
             }
             else if(adds_b==0x000001e0)
@@ -2944,7 +2435,7 @@ sub_case4_1:
                 adds_b+=0x20;
         }
 
-        Spi_read(adds_a,buff_page);
+        Spi_Page_Read(adds_a,buff_page);
 
         if(system_init_flag==1)
         {
@@ -3000,80 +2491,12 @@ sub_case4_1:
     }
 }
 
-//===============================================================================
-//	finction	:Updata_xuhao_dec
-//	input		:null
-//	output		:null
-//	return		:null
-//	edit		:sam 2012-9-1 23:25
-//	modefy		:null
-//===============================================================================
-void Updata_xuhao_dec(uint8_t select,uint8_t dec_data)
-{
-    uint8_t xuhao_h=0,xuhao_l=0,i;
-    uint32_t adds_a=0,adds_b=0;
-
-    switch(select)
-    {
-    case 1:
-        xuhao_h=Fenxi.xuhao_h;
-        xuhao_l=Fenxi.xuhao_l;
-        adds_a=adds_b=FX_write_index_adds_point;
-        break;
-    case 2:
-        xuhao_h=Jiaozheng.xuhao_h;
-        xuhao_l=Jiaozheng.xuhao_l;
-        adds_a=adds_b=JZ_write_index_adds_point;
-        break;
-    case 3:
-        xuhao_h=Cuowu.xuhao_h;
-        xuhao_l=Cuowu.xuhao_l;
-        adds_a=adds_b=CW_write_index_adds_point;
-        break;
-    case 4:
-        xuhao_h=Baojing.xuhao_h;
-        xuhao_l=Baojing.xuhao_l;
-        adds_a=adds_b=BJ_write_index_adds_point;
-        break;
-    }
-    adds_b&=0x000001ff;				//byte adds
-    adds_a>>=16;
-    adds_a&=0x0000ffff;				//page adds
-
-    if(adds_b==0x00000000)
-    {
-        adds_b=0x000001e0;
-        adds_a-=1;
-    }
-    else
-        adds_b-=0x20;
-
-    Spi_read(adds_a,buff_page);
-
-    for(i=0; i<dec_data; i++)
-    {
-        if(xuhao_l==0)
-        {
-            xuhao_l=0xff;
-            --xuhao_h;
-        }
-        else
-            --xuhao_l;
-    }
-
-    buff_page[adds_b+0]=xuhao_h;
-    buff_page[adds_b+1]=xuhao_l;
-
-    Spi_write(adds_a,buff_page);
-}
 
 //===============================================================================
 //	finction	:Updata_xuhao_data
-//	input		:null
-//	output		:null
-//	return		:null
+//	input		:select  1=分析，2=校正，3=错误，4=报警
 //	edit		:sam 2012-9-1 23:25
-//	modefy		:null
+//	description	:更新序号并将新序号写入flash
 //===============================================================================
 void Updata_xuhao_data(uint8_t select)
 {
@@ -3115,21 +2538,19 @@ void Updata_xuhao_data(uint8_t select)
     else
         adds_b-=0x20;
 
-    Spi_read(adds_a,buff_page);
+    Spi_Page_Read(adds_a,buff_page);
 
     buff_page[adds_b+0]=xuhao_h;
     buff_page[adds_b+1]=xuhao_l;
 
-    Spi_write(adds_a,buff_page);
+    Spi_Page_Write(adds_a,buff_page);
 }
 
 //===============================================================================
 //	finction	:Del_mem_data
-//	input		:null
-//	output		:null
-//	return		:null
+//	input		:select  1=分析，2=校正，3=错误，4=报警
 //	edit		:sam 2012-8-20 9:59
-//	modefy		:null
+//	description	:删除一条flash记录
 //===============================================================================
 void Del_mem_data(uint8_t select)
 {
@@ -3138,9 +2559,8 @@ void Del_mem_data(uint8_t select)
 
     switch(select)
     {
-    case 1:
-//             adds_a=adds_b=FX_read_index_adds_point;
-        adds_a=adds_b=FX_disp_read_index_adds_point;
+    case 1://分析
+        adds_a = adds_b = FX_disp_read_index_adds_point;
         if(Fenxi.xuhao_l==0)
         {
             Fenxi.xuhao_l=0xff;
@@ -3149,8 +2569,7 @@ void Del_mem_data(uint8_t select)
         else
             Fenxi.xuhao_l-=1;
         break;
-    case 2:
-//             adds_a=adds_b=JZ_read_index_adds_point;
+    case 2://校正
         adds_a=adds_b=JZ_disp_read_index_adds_point;
         if(Jiaozheng.xuhao_l==0)
         {
@@ -3160,8 +2579,7 @@ void Del_mem_data(uint8_t select)
         else
             Jiaozheng.xuhao_l-=1;
         break;
-    case 3:
-//             adds_a=adds_b=CW_read_index_adds_point;
+    case 3://错误
         adds_a=adds_b=CW_disp_read_index_adds_point;
         if(Cuowu.xuhao_l==0)
         {
@@ -3171,8 +2589,7 @@ void Del_mem_data(uint8_t select)
         else
             Cuowu.xuhao_l-=1;
         break;
-    case 4:
-//             adds_a=adds_b=BJ_read_index_adds_point;
+    case 4://报警
         adds_a=adds_b=BJ_disp_read_index_adds_point;
         if(Baojing.xuhao_l==0)
         {
@@ -3183,146 +2600,47 @@ void Del_mem_data(uint8_t select)
             Baojing.xuhao_l-=1;
         break;
     }
-    adds_b&=0x000001ff;				//byte adds
-    adds_a>>=16;
-    adds_a&=0x0000ffff;				//page adds
+    adds_b &= 0x1ff;				//byte adds : 一页大小为512byte
+    adds_a = (adds_a>>16) & 0xffff;	//page adds
 
-/////    if(adds_b==0x01e0)
-/////    {
-/////    	adds_b=0;
-/////    	++adds_a;
-/////    }
-/////    else adds_b+=0x20;
+    Spi_Page_Read(adds_a,buff_page);//将改页的数据读入buff_page缓存
 
-    Spi_read(adds_a,buff_page);
-
-    for(i=0; i<32; i++)
+    for(i=0; i<32; i++) //一条记录占用32个byte字节
     {
-        buff_page[adds_b+i]=0;
+        buff_page[adds_b+i]=0;//删除一条记录
     }
 
-    Spi_write(adds_a,buff_page);
+    Spi_Page_Write(adds_a,buff_page);//将修改好的buff_page存入flash
 
-    Updata_xuhao_data(select);  	//2012-9-1 23:24  									//delay 30ms
-    Menu_lever_select=3;
+    Updata_xuhao_data(select);  	//更新序号
+    Menu_lever_select=3;            //更新界面深度
     Menu_index_select=5;
 }
 
-//===============================================================================
-//	finction	:Eare_allmem_data
-//	input		:null
-//	output		:null
-//	return		:null
-//	edit		:sam 2012-8-20 9:59
-//	modefy		:null
-//===============================================================================
-//void Eare_allmem_data(uint32_t adds_st)
-//{
-//    uint16_t i;
-//    uint32_t adds_temp;
-//
-//    adds_temp=adds_st;
-//    adds_temp>>=7;
-//    for(i=0;i<2000;i++)
-//    {
-//    	Page_erase_free(adds_temp+BA_MMPPT_BUFF1);
-//        DrvSYS_Delay(50000);									//delay 30ms
-//        adds_temp+=0X0200;
-//    }
-//}
-//
-//===============================================================================
-//	finction	:Switch_e1e2_data
-//	input		:null
-//	output		:null
-//	return		:null
-//	edit		:sam 2012-9-11 12:46
-//	modefy		:null
-//===============================================================================
-//void Switch_e1e2_data(uint8_t select,uint8_t buf_adds)
-//{
-//	uint32_t disp_d;
-//
-//	disp_d=buff_page_exp_tx[buf_adds]<<24;
-//	disp_d+=buff_page_exp_tx[buf_adds+1]<<16;
-//	disp_d+=buff_page_exp_tx[buf_adds+2]<<8;
-//	disp_d+=buff_page_exp_tx[buf_adds+3];
-//
-//        if(select!=2)
-//        {
-//           if(disp_d<3125)
-//               disp_d=3125-disp_d;
-//           else
-//               disp_d=disp_d-3125;
-//        }
-//
-//     	disp_d=Float_to_int_reg_ee(disp_d);
-//     	buff_page_exp_tx[buf_adds]=disp_d>>24;
-//     	buff_page_exp_tx[buf_adds+1]=disp_d>>16;
-//     	buff_page_exp_tx[buf_adds+2]=disp_d>>8;
-//     	buff_page_exp_tx[buf_adds+3]=disp_d;
-//
-//        if(select!=2)
-//        {
-//           if(disp_d<3125)
-//               buff_page_exp_tx[buf_adds]|=0x80;
-//        }
-////----------------------------------------------------------
-//	disp_d=buff_page_exp_tx[buf_adds+4]<<24;
-//	disp_d+=buff_page_exp_tx[buf_adds+5]<<16;
-//	disp_d+=buff_page_exp_tx[buf_adds+6]<<8;
-//	disp_d+=buff_page_exp_tx[buf_adds+7];
-//
-//        if(select!=2)
-//        {
-//           if(disp_d<3125)
-//               disp_d=3125-disp_d;
-//           else
-//               disp_d=disp_d-3125;
-//        }
-//
-//     	disp_d=Float_to_int_reg_ee(disp_d);
-//     	buff_page_exp_tx[buf_adds+4]=disp_d>>24;
-//     	buff_page_exp_tx[buf_adds+5]=disp_d>>16;
-//     	buff_page_exp_tx[buf_adds+6]=disp_d>>8;
-//     	buff_page_exp_tx[buf_adds+7]=disp_d;
-//
-//        if(select!=2)
-//        {
-//           if(disp_d<3125)
-//               buff_page_exp_tx[buf_adds+4]|=0x80;
-//        }
-//}
 
 //===============================================================================
 //	finction	:Export__flash_data_finc
-//	input		:null
-//	output		:null
-//	return		:null
-//	edit		:sam 2012-9-10 13:47
-//	modefy		:null
+//	edit		:select  1=分析，2=校正，3=错误，4=报警
+//	description	:依次从flash中导出分析-校正-错误-报警记录
 //===============================================================================
 void Export__flash_data_finc(void)
 {
-    uint32_t adds_a,adds_b,sum;
-    uint16_t i,k;
-
-    sum=sum;
+    uint32_t adds_a,adds_b,sum = sum;
+    uint16_t i,k = 0;
 
     Set_back_light_10sec();
     switch(export_data_select)
     {
-    case 1:
+    case 1://分析
         if(export_tx_flag==0)
         {
             adds_a=adds_b=FX_export_index_adds_point;
-            adds_b&=0x000001ff;
-            adds_a>>=16;
-            adds_a&=0x0000ffff;				//page adds
+            adds_b = (FX_export_index_adds_point) & 0x1ff;          //计算数据在该页中的从一个byte开始
+            adds_a = (FX_export_index_adds_point >> 16) & 0xffff;	//取出页地址
 
-            if((adds_a==0x00000004)&&(adds_b==0x00000000))		//get first adds
+            if((adds_a==0x00000004) && (adds_b==0x00000000))		//第一条分析记录的地址,表示flash中还未保存有数据
             {
-                export_data_select=2;
+                export_data_select = 2;//导出校正记录
 
                 for(i=0; i<26; i++)
                     buff_page_exp_tx[i]=0x00;
@@ -3333,19 +2651,18 @@ void Export__flash_data_finc(void)
                 DrvUART_Write(UART_PORT0,buff_page_exp_tx,1);
                 En_Uart012_THRE_int(UART_PORT0);
             }
-            else
+            else              //flash中有分析记录
             {
-                Spi_read(adds_a,buff_page_exp);
+                Spi_Page_Read(adds_a,buff_page_exp);//读取一页数据
 
                 k=0;
-                for(i=16; i>0; i--)
+                for(i=16; i>0; i--)//一条记录32byte ,一页512byte, 所以一页最多保存16条记录
                 {
-                    sum=0;
-                    sum=buff_page_exp[(i-1)*0x20+9]+buff_page_exp[(i-1)*0x20+10]+buff_page_exp[(i-1)*0x20+11]+buff_page_exp[(i-1)*0x20+12];
-                    if((buff_page_exp[(i-1)*0x20+3]==0x20)&&(buff_page_exp[(i-1)*0x20+5]<=0x12)&&(buff_page_exp[(i-1)*0x20+7]<0x24))
+                    sum = buff_page_exp[(i-1)*0x20+9]+buff_page_exp[(i-1)*0x20+10]+buff_page_exp[(i-1)*0x20+11]+buff_page_exp[(i-1)*0x20+12];
+					//判断为20XX年(每条记录的年高位都是固定的0x20), 判断记录的月份是小于等于12月, 判断记录的小时小于等于24
+					//通过时间判断该条记录是否合法
+                    if((buff_page_exp[(i-1)*0x20+3]==0x20) && (buff_page_exp[(i-1)*0x20+5]<=0x12) && (buff_page_exp[(i-1)*0x20+7]<0x24))
                     {
-/////    	                 if(sum>=0x00)
-/////    	                 {
                         buff_page_exp_tx[k*25+0]=buff_page_exp[(i-1)*32+2];
                         buff_page_exp_tx[k*25+1]=buff_page_exp[(i-1)*32+3];
                         buff_page_exp_tx[k*25+2]=buff_page_exp[(i-1)*32+4];
@@ -3371,23 +2688,21 @@ void Export__flash_data_finc(void)
                         buff_page_exp_tx[k*25+22]=buff_page_exp[(i-1)*32+24];
                         buff_page_exp_tx[k*25+23]=buff_page_exp[(i-1)*32+25];
                         buff_page_exp_tx[k*25+24]=0xff;
-//    	                    Switch_e1e2_data(buff_page_exp_tx[k*25+22],(k*25+14));
-                        ++k;
-/////    	                 }
+                        ++k;//用于计算该页中有多少记录
                     }
                 }
-                if(adds_a==0x00000004)
-                    FX_export_index_adds_point=0x00040000;
+                if(adds_a==0x00000004)//所有数据都导出
+                    FX_export_index_adds_point = 0x00040000;
                 else
                 {
-                    adds_a-=1;
-                    adds_a<<=16;
-                    FX_export_index_adds_point=adds_a;
+                    adds_a = (adds_a - 1) << 16;//每导出一页的数据, 页地址减一
+                    FX_export_index_adds_point = adds_a;
 
                     if(adds_a==0x00040000)
                         FX_export_index_adds_point=0x00040001;
                 }
-                if(k!=0)
+				
+                if(k!=0)//该页有合法的分析记录
                 {
                     export_tx_lenth=k*25;
                     export_tx_flag=1;
@@ -3398,7 +2713,7 @@ void Export__flash_data_finc(void)
             }
         }
         break;
-    case 2:
+    case 2://校正
         if(export_tx_flag==0)
         {
             adds_a=adds_b=JZ_export_index_adds_point;
@@ -3406,7 +2721,7 @@ void Export__flash_data_finc(void)
             adds_a>>=16;
             adds_a&=0x0000ffff;				//page adds
 
-            if((adds_a==0x00000804)&&(adds_b==0x00000000))		//get first adds
+            if((adds_a==0x00000804)&&(adds_b==0x00000000))		//第一条校正记录的地址
             {
                 export_data_select=3;
 
@@ -3421,17 +2736,14 @@ void Export__flash_data_finc(void)
             }
             else
             {
-                Spi_read(adds_a,buff_page_exp);
+                Spi_Page_Read(adds_a,buff_page_exp);
 
                 k=0;
                 for(i=16; i>0; i--)
                 {
-                    sum=0;
                     sum=buff_page_exp[(i-1)*0x20+9]+buff_page_exp[(i-1)*0x20+10]+buff_page_exp[(i-1)*0x20+11]+buff_page_exp[(i-1)*0x20+12];
                     if((buff_page_exp[(i-1)*0x20+3]==0x20)&&(buff_page_exp[(i-1)*0x20+5]<=0x12)&&(buff_page_exp[(i-1)*0x20+7]<0x24))
                     {
-/////    	                 if(sum>=0x00)
-/////    	                 {
                         buff_page_exp_tx[k*25+0]=buff_page_exp[(i-1)*32+2];
                         buff_page_exp_tx[k*25+1]=buff_page_exp[(i-1)*32+3];
                         buff_page_exp_tx[k*25+2]=buff_page_exp[(i-1)*32+4];
@@ -3484,7 +2796,7 @@ void Export__flash_data_finc(void)
             }
         }
         break;
-    case 3:
+    case 3://错误
         if(export_tx_flag==0)
         {
             adds_a=adds_b=CW_export_index_adds_point;
@@ -3507,7 +2819,7 @@ void Export__flash_data_finc(void)
             }
             else
             {
-                Spi_read(adds_a,buff_page_exp);
+                Spi_Page_Read(adds_a,buff_page_exp);
 
                 k=0;
                 for(i=16; i>0; i--)
@@ -3570,7 +2882,7 @@ void Export__flash_data_finc(void)
             }
         }
         break;
-    case 4:
+    case 4://报警
         if(export_tx_flag==0)
         {
             adds_a=adds_b=BJ_export_index_adds_point;
@@ -3580,7 +2892,6 @@ void Export__flash_data_finc(void)
 
             if((adds_a==0x00001804)&&(adds_b==0x00000000))		//get first adds
             {
-
                 for(i=0; i<26; i++)
                     buff_page_exp_tx[i]=0x00;
 
@@ -3590,7 +2901,7 @@ void Export__flash_data_finc(void)
             }
             else
             {
-                Spi_read(adds_a,buff_page_exp);
+                Spi_Page_Read(adds_a,buff_page_exp);
 
                 k=0;
                 for(i=16; i>0; i--)
@@ -3658,40 +2969,26 @@ void Export__flash_data_finc(void)
 
 //===============================================================================
 //	finction	:Back_system_reg
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-10-24 10:21
-//	modefy		:null
+//	description	:备份系统配置:从SYSTEM_REG_PAGE地址读取数据保存到BACK_SYSTEM_REG_ADDS中
 //===============================================================================
 void Back_system_reg(void)
 {
-    Spi_read(SYSTEM_REG_PAGE,buff_page);
-    Spi_write(BACK_SYSTEM_REG_ADDS,buff_page);
+    Spi_Page_Read(SYSTEM_REG_PAGE,buff_page);
+    Spi_Page_Write(BACK_SYSTEM_REG_ADDS,buff_page);
 }
 
 //===============================================================================
 //	finction	:Load_bak_system_reg
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-10-24 10:21
-//	modefy		:null
+//	description	:将BACK_SYSTEM_REG_ADDS中的数据保存到SYSTEM_REG_PAGE地址中
+//              :其中分析/校正/错误/报警的读写地址要是当前地址
 //===============================================================================
 void Load_bak_system_reg(void)
 {
     uint8_t i;
-
-////    FX_write_index_adds_point=FX_CHIP_START_ADDS;
-////    FX_read_index_adds_point=FX_CHIP_START_ADDS;
-////    JZ_write_index_adds_point=JZ_CHIP_START_ADDS;
-////    JZ_read_index_adds_point=JZ_CHIP_START_ADDS;
-////    CW_write_index_adds_point=CW_CHIP_START_ADDS;
-////    CW_read_index_adds_point=CW_CHIP_START_ADDS;
-////    BJ_write_index_adds_point=BJ_CHIP_START_ADDS;
-////    BJ_read_index_adds_point=BJ_CHIP_START_ADDS;
-
-    Buff_get_reg_32bit_data(4,FX_write_index_adds_point);
+	//将地址写入buff_page_w缓存中
+    Buff_get_reg_32bit_data(4,FX_write_index_adds_point);//从4开始是为了方便下面的for循环
     Buff_get_reg_32bit_data(8,FX_read_index_adds_point);
     Buff_get_reg_32bit_data(12,JZ_write_index_adds_point);
     Buff_get_reg_32bit_data(16,JZ_read_index_adds_point);
@@ -3700,36 +2997,26 @@ void Load_bak_system_reg(void)
     Buff_get_reg_32bit_data(28,BJ_write_index_adds_point);
     Buff_get_reg_32bit_data(32,BJ_read_index_adds_point);
 
-    Spi_read(BACK_SYSTEM_REG_ADDS,buff_page);
-    for(i=0; i<32; i++) buff_page[i+4]=buff_page_w[i+4];
-
-    Spi_write(SYSTEM_REG_PAGE,buff_page);
+    Spi_Page_Read(BACK_SYSTEM_REG_ADDS, buff_page);
+    for(i=0; i<32; i++) 
+		buff_page[i+4] = buff_page_w[i+4];
+    Spi_Page_Write(SYSTEM_REG_PAGE, buff_page);
 }
 
-//===============================================================================
-//===============================================================================
-//===============================================================================
-uint8_t	Buff_68[512];
-uint8_t	Buff_816[1024];
 
 //===============================================================================
 //	finction	:Rd_check_lcd_data
-//      detials         :null
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2013-3-15 10:33
-//	modefy		:null
+//  return      :1:有字库更新, 0:无字库更新
+//	description	:判断字符是否有更新
 //===============================================================================
 uint8_t Rd_check_lcd_data(void)
 {
     uint32_t adds_a,temp;
 
-    adds_a=DATA_HZ_END_ADDS;
-    adds_a>>=16;
-    adds_a&=0x0000ffff;				//page adds
+    adds_a = (DATA_HZ_END_ADDS >> 16) & 0xffff;//page adds
 
-    Spi_read(adds_a,buff_page);
+    Spi_Page_Read(adds_a,buff_page);
     temp=(buff_page[0]|(buff_page[1]<<8)|(buff_page[2]<<16)|(buff_page[3]<<24));
     if(temp!=0xAAAA5555) 
 			return(1);
@@ -3739,12 +3026,8 @@ uint8_t Rd_check_lcd_data(void)
 
 //===============================================================================
 //	finction	:Check_updta_lcd_data
-//      detials         :null
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2013-3-15 10:33
-//	modefy		:null
+//	description	:更新字库,将sd卡中的字库读取,写入到flash中
 //===============================================================================
 void Check_updta_lcd_data(void)
 {
@@ -3752,10 +3035,10 @@ void Check_updta_lcd_data(void)
     uint16_t  i;
     uint32_t  adds_a;
 
-    if((DrvGPIO_GetBit(E_GPC,0))==0)
+    if((DrvGPIO_GetBit(E_GPC,0))==0)//检测是否有SD卡
     {
         SD_read_flag=read_file_lenth_cnt=0;
-        Sd_read_file(0x00545854,0x44415441,0x36382020);		//DATA68
+        Sd_read_file(0x00545854,0x44415441,0x36382020);		//DATA68,读取数据到SD_data_buff中
         for(i=0; i<512; i++)
         {
             if(SD_data_buff[i]<0x3a)
@@ -3765,11 +3048,13 @@ void Check_updta_lcd_data(void)
 
             buff_page[i]=0;
         }
+		//初始化Buff_68与buff_page中的第0-255位的数据,并将SD_data_buff中的数据赋为0x30
         for(i=0; i<256; i++)
         {
             Buff_68[i] = buff_page[i] = ((SD_data_buff[i*2]<<4)|SD_data_buff[i*2+1]);
-            SD_data_buff[i*2]=SD_data_buff[i*2+1]=0x30;
+            SD_data_buff[i*2] = SD_data_buff[i*2+1] = 0x30;
         }
+		
         Sd_read_file(0x00545854,0x44415441,0x36382020);		//DATA68
         for(i=0; i<512; i++)
         {
@@ -3777,18 +3062,15 @@ void Check_updta_lcd_data(void)
                 SD_data_buff[i]-=0x30;
             else
                 SD_data_buff[i]-=0x37;
-
-//     	   buff_page[i]=0;
         }
+		//初始化Buff_68与buff_page中的第256-511位的数据,并将SD_data_buff中的数据赋为0x30
         for(i=256; i<512; i++)
         {
-            Buff_68[i]=buff_page[i]=((SD_data_buff[(i-256)*2]<<4)|SD_data_buff[(i-256)*2+1]);
-            SD_data_buff[(i-256)*2]=SD_data_buff[(i-256)*2+1]=0x30;
+            Buff_68[i] = buff_page[i] = ((SD_data_buff[(i-256)*2]<<4)|SD_data_buff[(i-256)*2+1]);
+            SD_data_buff[(i-256)*2] = SD_data_buff[(i-256)*2+1] = 0x30;
         }
-        adds_a=DATA_6X8_ADDS;
-        adds_a>>=16;
-        adds_a&=0x0000ffff;				//page adds
-        Spi_write(adds_a,buff_page);
+        adds_a=(DATA_6X8_ADDS>>16) & 0xffff;//page adds
+        Spi_Page_Write(adds_a,buff_page);//
 //--------------------------------------------------------------------------
         SD_read_flag=read_file_lenth_cnt=0;
         for(j=0; j<2; j++)
@@ -3816,8 +3098,6 @@ void Check_updta_lcd_data(void)
                     SD_data_buff[i]-=0x30;
                 else
                     SD_data_buff[i]-=0x37;
-
-//     	      buff_page[i]=0;
             }
             for(i=256; i<512; i++)
             {
@@ -3829,9 +3109,10 @@ w1_ex:
             adds_a>>=16;
             adds_a&=0x0000ffff;				//page adds
             adds_a+=j;
-            Spi_write(adds_a,buff_page);
+            Spi_Page_Write(adds_a,buff_page);
             DrvSYS_Delay(6000000);
-            if(rs==2) break;
+            if(rs==2) 
+				break;
         }
 //--------------------------------------------------------------------------
         SD_read_flag=read_file_lenth_cnt=0;
@@ -3862,8 +3143,6 @@ w1_ex:
                     SD_data_buff[i]-=0x30;
                 else
                     SD_data_buff[i]-=0x37;
-
-//     	      buff_page[i]=0;
             }
             for(i=256; i<512; i++)
             {
@@ -3875,7 +3154,7 @@ w2_ex:
             adds_a>>=16;
             adds_a&=0x0000ffff;				//page adds
             adds_a+=j;
-            Spi_write(adds_a,buff_page);
+            Spi_Page_Write(adds_a,buff_page);
             DrvSYS_Delay(6000000);
             if(rs==2) break;
         }
@@ -3885,49 +3164,35 @@ w2_ex:
         while(1) {}
     }
 //-------------------------------write flag
-    adds_a=DATA_HZ_END_ADDS;
-    adds_a>>=16;
-    adds_a&=0x0000ffff;				//page adds
+    adds_a=DATA_HZ_END_ADDS>>16;//page adds
 
     for(i=0; i<512; i++)
         buff_page[i]=0;
 
     buff_page[0]=buff_page[1]=0x55;
     buff_page[2]=buff_page[3]=0xAA;
-    Spi_write(adds_a,buff_page);
+    Spi_Page_Write(adds_a,buff_page);
 }
 
 //===============================================================================
 //	finction	:Rd_check_lcd_data
-//      detials         :null
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2013-3-15 10:33
-//	modefy		:null
+//	description	:从flash中读取字库文件到缓存数组中
 //===============================================================================
 void Rd_init_lcd_data(void)
 {
-/////     uint8_t   j,rs;
     uint16_t  i;
     uint32_t  adds_a;
 
-    adds_a=DATA_6X8_ADDS;
-    adds_a>>=16;
-    adds_a&=0x0000ffff;				//page adds
-    Spi_read(adds_a,Buff_68);				//6x8 data
+    adds_a=DATA_6X8_ADDS>>16;     //page adds
+    Spi_Page_Read(adds_a,Buff_68);//6x8 data
 
-    adds_a=DATA_8X16_ADDS;
-    adds_a>>=16;
-    adds_a&=0x0000ffff;				//page adds
-    Spi_read(adds_a,Buff_816);				//8x16 data
+    adds_a=DATA_8X16_ADDS>>16;     //page adds
+    Spi_Page_Read(adds_a,Buff_816);//8x16 data
 
-    adds_a=DATA_8X16_ADDS;
-    adds_a>>=16;
-    adds_a&=0x0000ffff;				//page adds
-    ++adds_a;
-    Spi_read(adds_a,buff_page);			//8x16 data
+    adds_a=(DATA_8X16_ADDS>>16) + 1;//page adds
+    Spi_Page_Read(adds_a,buff_page);//8x16 data
 
     for(i=0; i<512; i++)
-        Buff_816[i+512]=buff_page[i];
+        Buff_816[i+512] = buff_page[i];
 }

@@ -141,13 +141,6 @@ uint8_t const TB_Sample_washing_index[]={
 	                              CLSV08,STOP_MOTO,0xff,CLSV02,CLSV03,ZSB_T0_00S,OPV02,OPV03,0x88,                            
                                      };	                          
 //===============================================================================
-//uint8_t const TB_paikong_index[]={
-//	                              OPV08_10S,CLSV01,CLSV03,CLSV04,ZSB_T0_05S,CLSV08,OPV01,ZSB_T_7ML,CLSV01,ZSB_T0_00S,
-//	                              OPV01,ZSB_T_7ML,CLSV01,ZSB_T0_05S,OPV08_10S,CLSV08,OPV01,ZSB_T_7ML,CLSV01,
-//	                              ZSB_T0_00S,OPV01,ZSB_T_7ML,CLSV01,ZSB_T0_05S,OPV08_10S,CLSV08,OPV01,ZSB_T_7ML,CLSV01,
-//                                      ZSB_T0_00S,OPV01,ZSB_T_7ML,CLSV01,ZSB_T0_00S,STOP_MOTO,0xff,
-//                                     };	 
-
 //----2015.05.19
 uint8_t const TB_paikong_index[]={
 	                              OPV08_10S,CLSV01,CLSV03,CLSV04,ZSB_T0_05S,CLSV08,OPV01,0x88,CLSV01,ZSB_T0_00S,
@@ -166,15 +159,6 @@ uint8_t const TB_BY1_wash_index[]={
 	                              OPV03,0x88,CLSV03,ZSB_T0_00S,OPV03,0x88,CLSV03,ZSB_T0_00S,
 	                              OPV08_10S,CLSV08,STOP_MOTO,0xff,
                                      };	                          
-
-///uint8_t const TB_BY1_wash_index[]={
-///	                              OPV03,ZSB_T_7ML,CLSV03,ZSB_T0_00S,STOP_MOTO,0x88,0x88,OPV03,ZSB_T_7ML,CLSV03,ZSB_T0_00S,
-///	                              OPV08_10S,CLSV08,STOP_MOTO,0xff,
-///                                     };	                          
-//===============================================================================
-////uint8_t const TB_ZSB_initial_index[]={
-////	                              OPV08_5S,CLSV01,CLSV03,CLSV04,0x88,ZSB_T0_05S,CLSV08,0xff,
-////                                     };	                          
 //===============================================================================
 uint8_t const TB_xishi_index[]={
 	                              OPV01,ZSB_T_9ML,CLSV01,ZSB_T0_00S,0x88,OPV01,ZSB_T_9ML,CLSV01,ZSB_T0_05S,OPV08_10S,

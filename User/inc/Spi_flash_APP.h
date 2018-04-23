@@ -25,8 +25,8 @@
 #define		BJ_CHIP_END_ADDS			 0x1F9A0000	//8090		//0x1FFE0000	//8190 2012-10-24 9:35  2013-3-14 17:04
 
 
-#define		DATA_HZ_START_ADDS			 0x1F9B0000	//8091		//2013-3-14 17:06
-#define		DATA_HZ_END_ADDS			 0x1FB90000	//8121	30PAGE	//2013-3-14 17:06 write flag 5555AAAA
+#define		DATA_HZ_START_ADDS			 0x1F9B0000	//8091		//2013-3-14 17:06 字库开始地址
+#define		DATA_HZ_END_ADDS			 0x1FB90000	//8121	30PAGE	//2013-3-14 17:06 write flag 5555AAAA 字库结束地址
 #define		DATA_6X8_ADDS			 	 0x1FBA0000	//8122	2PAGE	//2013-3-14 17:06
 #define		DATA_8X16_ADDS			 	 0x1FBC0000	//8124	4PAGE	//2013-3-14 17:06
 #define		CHIP_END_ADDS			 	 0x1FFE0000	//8190		//2013-3-14 17:06
@@ -52,10 +52,10 @@
 
 #define		M_menur1_lange_data_temp_ADDS            12
 #define		M_menur1_led_dianliu_temp_ADDS           16
-#define		M_menur1_JB_speed_temp_ADDS		 20
+#define		M_menur1_JB_speed_temp_ADDS		         20
 #define		M_menur1_ZSB_speed_temp_ADDS             24	                                                 
 #define		M_menur1_sample_v_temp_ADDS              28	                                                 
-#define		M_menur1_slope_temp_ADDS 		 32
+#define		M_menur1_slope_temp_ADDS 		         32
 #define		M_menur1_jz1nd_temp_ADDS                 36 
 #define		M_menur1_jz1_v_temp_ADDS                 40 
 #define		M_menur1_jz2nd_temp_ADDS                 44 
@@ -211,11 +211,6 @@ extern uint32_t FX_export_index_adds_point;
 extern uint32_t JZ_export_index_adds_point;
 extern uint32_t BJ_export_index_adds_point;
 extern uint32_t CW_export_index_adds_point;
-                           
-extern uint8_t	pub_Adds_h;                               
-extern uint8_t	pub_Adds_m;                               
-extern uint8_t	pub_Adds_l;                               
-extern uint8_t	pub_buff_lenth;
 
 extern uint8_t	buff_page[512];
 extern uint8_t	buff_page_w[512];
@@ -236,7 +231,6 @@ extern uint32_t BJ_write_index_adds_point;
 extern uint32_t BJ_read_index_adds_point;
 extern uint32_t CW_write_index_adds_point;
 extern uint32_t CW_read_index_adds_point;
-
 extern struct Save_data{
                  uint8_t  xuhao_h;
                  uint8_t  xuhao_l;
@@ -302,8 +296,8 @@ extern void	Back_system_reg(void);
 extern void	Load_bak_system_reg(void);
 
 extern void	SPI_flash_init(void);
-extern void	Spi_read(uint32_t page_address,uint8_t *buf);
-extern void	Spi_write(uint32_t page_address,uint8_t *buf);
+extern void	Spi_Page_Read(uint32_t page_address,uint8_t *buf);
+extern void	Spi_Page_Write(uint32_t page_address,uint8_t *buf);
 
 extern uint8_t  Rd_check_lcd_data(void);
 extern void 	Check_updta_lcd_data(void);

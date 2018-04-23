@@ -689,14 +689,11 @@ int32_t DrvUART_Write(E_UART_PORT	u32Port,uint8_t	*pu8TxBuf, 	uint32_t u32WriteB
        	    u32delayno++;
        	    if ( u32delayno >= 0x40000000 )     	    
        	       return E_DRVUART_ERR_TIMEOUT;     	       
-				   
        }
 	   tUART->DATA = pu8TxBuf[u32Count];						/* Send UART Data from buffer */
     }
 
     return E_SUCCESS;
-	
-  
 }
 
 

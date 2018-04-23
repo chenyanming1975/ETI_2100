@@ -87,7 +87,6 @@ void Timer1_initial(void)
 //	TIMER1->TCMPR = 58;		// Set 1kHz 58:use 14.375M  47:use 12M 88:use 22M
     TIMER1->TCMPR = 580;		// Set 100Hz 58:use 14.375M  47:use 12M 88:use 22M
 
-
     /* Step 4. Enable interrupt */
     TIMER1->TCSR.IE = 1;
     TIMER1->TISR.TIF = 1;		//Write 1 to clear for safty
@@ -118,21 +117,7 @@ void TMR0_IRQHandler(void)
     if ((TIMER0->TEXCON.TEXEN == 1) && (TIMER0->TEXCON.TEXIEN == 1) && (TIMER0->TEXISR.TEXIF == 1))
         TIMER0->TEXISR.TEXIF = 1;
 
-//    Back_light_ctrl_finc();
     Buzz_ctrl_finc();  			//蜂鸣器控制函数
-
-
-//-----------------------------\for test clock
-//    if(timer_test==0)
-//    {
-//    	DrvGPIO_SetBit(E_GPD,6);
-//    	timer_test=1;
-//    }
-//    else
-//    {
-//    	DrvGPIO_ClrBit(E_GPD,6);
-//    	timer_test=0;
-//    }
 }
 
 //============================================================================================
@@ -148,28 +133,14 @@ void TMR0_IRQHandler(void)
 void TMR1_IRQHandler(void) // Timer1 interrupt subroutine
 {
     TIMER1->TISR.TIF =1;
-//    TimerCounter1+=1;
 
-//    if(Rtc_int_flag==0x01)
-//    {
-//    	Rtc_int_cnt=0;
-//    	Rtc_int_flag=0x02;
-//    }
-//    else if(Rtc_int_flag==0x02)
-//    {
-//    	++Rtc_int_cnt;
-//    	if(Rtc_int_cnt>=0xc8)
-//    	{
-//    	   Rtc_int_flag=0x03;
-//    	}
-//    }
     ++wd_use_ramdom;
 
     Key_scan_bounce_time(); 		//按键去抖动计时
     Wait_slave_return_time();		//通讯超时计时
     Back_light_time_cnter();		//LCD背光计时
-    Program_wait_time();		//分析流程公用计时
-    Program_wait_time_nc();		//分析流程公用计时
+    Program_wait_time();		    //分析流程公用计时
+    Program_wait_time_nc();		    //分析流程公用计时
     Test_signal_wait_time();		//分析流程读电压值公用计时
     Menu1_auto_fenxi_time_down_cnt();	//自动分析间隔时间计时
     Uart2_rx_time_cnt();		//串口2计时

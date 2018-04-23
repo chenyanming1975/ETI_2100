@@ -21,8 +21,8 @@ volatile uint8_t		Rx_TX_flag;
 uint8_t 	re_table0[4];
 uint8_t 	re_table2[2];
 
-volatile uint8_t 	U_slave_add_temp;
-volatile uint8_t 	U_cmd_temp;
+volatile uint8_t 	U_slave_add_temp;//从机地址
+volatile uint8_t 	U_cmd_temp;      //串口发送中的功能码
 volatile uint8_t 	U_save_data_lenth;
 volatile uint16_t 	U_read_write_data_lenth;
 volatile uint16_t	U_start_adds_temp;
@@ -45,7 +45,6 @@ volatile uint8_t	U2_tx_Flag;
 uint8_t 	U2_re_table[256];
 
 //-------------------Test potocal Variable --------------------------
-//##0093ST=32;CN=8013; PW=;MN=5256994000210 0;CP=&&DataTime=YYYY MMDDHHMMSS;060-Rtd=X XXX.XX,060-Flag=X&&X XXX\r\n
 uint8_t 	Test_potocal_buff[256];
 
 volatile uint8_t	Test_potocal_data_lenth;
@@ -94,7 +93,7 @@ uint16_t CRC16(uint8_t *data,uint8_t length)
 //	output		:null
 //	return		:null
 //	edit		:sam 2012.06.08
-//	modefy		:null
+//	description :SP485R收发控制
 //===============================================================================
 void Com1_rd_ctrl(uint8_t RD1_01)			//串口1收发硬件控制转换
 {
@@ -301,7 +300,7 @@ void Get_Test_potocal_data(uint8_t select)
         else
             adds_b-=0x20;
     }
-    Spi_read(adds_a,buff_temp);
+    Spi_Page_Read(adds_a,buff_temp);
     Test_potocal_buff[62]='2';
     Test_potocal_buff[63]='0';
     Test_potocal_buff[64]='1';
@@ -372,7 +371,7 @@ void Get_Test_potocal_data(uint8_t select)
             else
                 adds_b-=0x40;
         }
-        Spi_read(adds_a,buff_temp);
+        Spi_Page_Read(adds_a,buff_temp);
 
         i=buff_temp[adds_b+5]>>4;
         i&=0x0f;
@@ -608,35 +607,6 @@ void Run_potocal_test(void)
 
 #endif
 
-//===============================================================================
-//	finction	:Com1_rd_ctrl
-//	input		:RD1_01
-//	output		:null
-//	return		:null
-//	edit		:sam 2012.06.08
-//	modefy		:null
-//===============================================================================
-PUTCHAR_PROTOTYPE
-{
-    /* Place your implementation of fputc here */
-    /* e.g. write a character to the USART */
-//USART_SendData(EVAL_COM1, (uint8_t) ch);
-//  	USARTx_Tx(USART2 ,ch);
-//	USARTx_TxEN(USART2);
-//	while((USART2->SR&(1<<6))!=(1<<6));
-//	USARTx_TxUN(USART2);
-//	USARTx_Status_Reset(USART2);
-
-    /* Loop until the end of transmission */
-    uint8_t *i,j;
-
-    j=(uint8_t)ch;
-    i=&j;
-
-    DrvUART_Write(UART_PORT2,i,1);
-
-    return(ch);
-}
 
 //===============================================================================
 //	finction	:Dis_Uart012_THRE_int
@@ -667,12 +637,9 @@ void Dis_Uart012_THRE_int(uint32_t uPort)			//串口0.1.2禁止发送中断控制
 
 //===============================================================================
 //	finction	:Write_more_byte_set_data
-//	input		:null
-//			 null
-//	output		:null
-//	return		:null
+//	input		:data_lenth
 //	edit		:sam 2012.06.26
-//	modefy		:null
+//	description	:将buff_page中的第i个数据 放入U_data_buff中的7+i的位置，依次复制data_lenth个
 //===============================================================================
 void Write_more_byte_set_data(uint8_t data_lenth)
 {
@@ -680,8 +647,6 @@ void Write_more_byte_set_data(uint8_t data_lenth)
 
     if(data_lenth<=0x78)
     {
-//        Spi_buff_page_read512(CMD_BUFF1_READ,pub_Adds_h,pub_Adds_m,pub_Adds_l,data_lenth);
-//        Spi_memory_page_read(CMD_MAIN_MMP_READ,adds_temp,SYSTEM_REG_LENTH);
         for(i_len=0; i_len<=data_lenth; i_len++)
         {
             U_data_buff[7+i_len]=buff_page[i_len];
@@ -692,11 +657,8 @@ void Write_more_byte_set_data(uint8_t data_lenth)
 //===============================================================================
 //	finction	:Set_tx_data_and_start_tx
 //	input		:null
-//			 null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012.06.26
-//	modefy		:null
+//	description	:Set_tx_cmd_data_finc函数中进行调用
 //===============================================================================
 void Set_tx_data_and_start_tx(void)			//窜口1设置使用查询方式发送数据。
 {
@@ -709,46 +671,42 @@ void Set_tx_data_and_start_tx(void)			//窜口1设置使用查询方式发送数据。
     UART_T * tUART;
     tUART = (UART_T *)((uint32_t)UART0 + UART_PORT1);
 
-
-    U_data_buff[0]=U_slave_add_temp;
-    U_data_buff[1]=U_cmd_temp;
-    U_data_buff[2]=U_start_adds_temp>>8;
-    U_data_buff[3]=U_start_adds_temp;
-
-    U_data_buff[4]=U_read_write_data_lenth>>8;
-    U_data_buff[5]=U_read_write_data_lenth;
+    U_data_buff[0]=U_slave_add_temp;//从机地址
+    U_data_buff[1]=U_cmd_temp;      //功能码
+    U_data_buff[2]=U_start_adds_temp>>8;//起始地址高字节
+    U_data_buff[3]=U_start_adds_temp;   //起始地址低字节
+    U_data_buff[4]=U_read_write_data_lenth>>8;//数据长度高字节
+    U_data_buff[5]=U_read_write_data_lenth;   //数据长度低字节
     U_RX_TX_byte_lenth=6;
 
-    if(U_data_buff[1]==0x10)
+    if(U_data_buff[1]==0x10)//写多个保持寄存器
     {
         U_data_buff[6]=U_save_data_lenth;
         ++U_RX_TX_byte_lenth;
-        U_RX_TX_byte_lenth=U_RX_TX_byte_lenth+U_save_data_lenth;		//set data form U_data_buff[7]
-
-        Write_more_byte_set_data(U_save_data_lenth);			//set save data
-
-        i=CRC16(U_data_buff,U_RX_TX_byte_lenth);
-        U_data_buff[U_RX_TX_byte_lenth+1]=i>>8;
-        U_data_buff[U_RX_TX_byte_lenth]=i;
+        U_RX_TX_byte_lenth += U_save_data_lenth;    //set data form U_data_buff[7]
+        Write_more_byte_set_data(U_save_data_lenth);//设置U_data_buff[7]之后的U_save_data_lenth个数据
+		
+        i=CRC16(U_data_buff,U_RX_TX_byte_lenth);//计算校验码
+        U_data_buff[U_RX_TX_byte_lenth+1]=i>>8;//校验码高8位
+        U_data_buff[U_RX_TX_byte_lenth]=i;     //校验码低8位
 
         U_RX_TX_byte_lenth+=2;
     }
     else
     {
         i=CRC16(U_data_buff,U_RX_TX_byte_lenth);
-//       DrvSYS_Delay(5000);			//delay 5ms
-        U_data_buff[6]=i;
-        U_data_buff[7]=i>>8;
+        U_data_buff[6]=i;     //CRC校验码低8位   
+        U_data_buff[7]=i>>8;  //CRC校验码高8位
 
         U_RX_TX_byte_lenth=8;
     }
 //--------------------------------\start tx
-    DrvGPIO_ClrBit (E_GPB,6);
-    Com1_rd_ctrl(1);
+    DrvGPIO_ClrBit (E_GPB,6);//点亮LED-COM1
+    Com1_rd_ctrl(1);         //发送使能
     U_Rx_wait_time_flag_temp=0;
 
-    Dis_Uart012_THRE_int(UART_PORT1);
-    DrvGPIO_DisableEINT0();							//2013-7-10 10:59
+    Dis_Uart012_THRE_int(UART_PORT1);//禁止发送中断
+    DrvGPIO_DisableEINT0();			 //2013-7-10 10:59
 
     for(U_RX_TX_byte_lenth_cnt=0; U_RX_TX_byte_lenth_cnt<U_RX_TX_byte_lenth; U_RX_TX_byte_lenth_cnt++)
     {
@@ -759,29 +717,31 @@ void Set_tx_data_and_start_tx(void)			//窜口1设置使用查询方式发送数据。
         while (tUART->FSR.TE_FLAG !=1)						    	/* Wait Tx empty */
         {
             u32delayno++;
-            if ( u32delayno >= 0x00400000 )
+            if ( u32delayno >= 0x00400000 )//发送超时
             {
-                Set_en_buzz_finc(4,4,200,100);
+                Set_en_buzz_finc(4,4,200,100);//蜂鸣器报警
                 break;
             }
         }
     }
 
-    DrvGPIO_EnableEINT0 (E_IO_FALLING,E_MODE_EDGE,EINT0Callback); 		//2013-7-10 10:59
+    
+	DrvGPIO_EnableEINT0 (E_IO_FALLING,E_MODE_EDGE,EINT0Callback);//2013-7-10 10:59 使能EINT0中断
 
-    Uart_tx_rx_fifo_int_FLAG|=BIT3;
-////    Dis_Uart012_THRE_int(UART_PORT1);
-    U_RX_TX_byte_lenth_cnt=0x00;
+    Uart_tx_rx_fifo_int_FLAG |= BIT3;//置位bit3
+
+    U_RX_TX_byte_lenth_cnt=0x00;//清零计数
 
     if(Rx_TX_flag_local==0x01)
         Rx_TX_flag_local=0;
 
     DrvSYS_Delay(200);
-    Com1_rd_ctrl(0);
-    U_Rx_wait_time_flag_temp=0x8000;
+    Com1_rd_ctrl(0);  //接收使能
+    U_Rx_wait_time_flag_temp=0x8000;//设置接收超时时间
 
-    U_data_buff[0]=U_data_buff[1]=0;
-
+    U_data_buff[0]=U_data_buff[1]=0;//清空从机地址与功能码
+	
+	//PB12(LED-COM2)输出高电平,灭灯
     k=GPIOB->DOUT;
     k&=0x00000800;
     if(k==0x00000800)
@@ -798,38 +758,42 @@ void Set_tx_data_and_start_tx(void)			//窜口1设置使用查询方式发送数据。
 //	output		:null
 //	return		:null
 //	edit		:sam 2012.06.08
-//	modefy		:null
+//	descripton  :串口0发送用于导出功能
 //===============================================================================
 void UART0_IRQHandler_APP(uint32_t u32IntStatus)
 {
     uint8_t RT_buff[2];
 
+	/* Receive Data Available Interrupt */
     if(u32IntStatus & DRVUART_RDAINT)
     {
         /* Get all the input characters */
         while(UART0->ISR.RDA_IF==1) 		//RXD INT READ DATA
         {
-            DrvGPIO_ClrBit(E_GPB,13);
-            DrvUART_Read(UART_PORT0,re_table0,1);
-            u32IntStatus&=~BIT1;
-            Uart_tx_rx_fifo_int_FLAG|=BIT0;
+            DrvGPIO_ClrBit(E_GPB,13);//点亮LED-COM0
+            DrvUART_Read(UART_PORT0,re_table0,1);//从串口0读取一个byte的数据
+            u32IntStatus &=~ BIT1;   //清零bit1位
+            Uart_tx_rx_fifo_int_FLAG |= BIT0;//置位bit0位
         }
     }
-    if(u32IntStatus & DRVUART_THREINT)
+	
+	/* Transmit Holding Register Empty Interrupt */
+    if(u32IntStatus & DRVUART_THREINT)// 
     {
         ++export_tx_lenth_cnt;
         RT_buff[0]=buff_page_exp_tx[export_tx_lenth_cnt];
-        if((export_tx_lenth_cnt<export_tx_lenth)&&(export_tx_flag==1))
+		//导出功能开启，并且数据还没有发送完
+        if( (export_tx_lenth_cnt<export_tx_lenth) && (export_tx_flag==1))
         {
-            DrvUART_Write(UART_PORT0,RT_buff,1);
+            DrvUART_Write(UART_PORT0,RT_buff,1);//发送1byte数据
         }
         else
         {
-            DrvSYS_Delay(5000);				//delay 5ms
-            Uart_tx_rx_fifo_int_FLAG|=BIT1;
-            Dis_Uart012_THRE_int(UART_PORT0);
-            export_tx_lenth_cnt=0x00;
-            export_tx_flag=0;
+            DrvSYS_Delay(5000);				 //delay 5ms
+            Uart_tx_rx_fifo_int_FLAG |= BIT1;//置位bit1位
+            Dis_Uart012_THRE_int(UART_PORT0);//关中断
+            export_tx_lenth_cnt=0x00;        //清空计数
+            export_tx_flag=0;                //清标志
         }
     }
 }
@@ -845,44 +809,44 @@ void UART0_IRQHandler_APP(uint32_t u32IntStatus)
 void UART1_IRQHandler_APP(uint32_t u32IntStatus)
 {
     uint8_t    RT_buff[2],i;
-/////    uint32_t   u32delayno;
 
     UART_T * tUART;
     tUART = (UART_T *)((uint32_t)UART0 + UART_PORT1);
-
+	
+	/* Receive Data Available Interrupt */
     if(u32IntStatus & DRVUART_RDAINT)
     {
         /* Get all the input characters */
         while(UART1->ISR.RDA_IF==1) 		//RXD INT READ DATA
         {
-            DrvGPIO_ClrBit(E_GPB,6);
+            DrvGPIO_ClrBit(E_GPB,6);//点亮LED-COM1
             U_Rx_wait_time_flag_temp=0;
-            Uart_tx_rx_fifo_int_FLAG&=~BIT3;
+            Uart_tx_rx_fifo_int_FLAG &= ~BIT3;//清bit3
 
-            DrvUART_Read(UART_PORT1,RT_buff,1);
+            DrvUART_Read(UART_PORT1,RT_buff,1);//读取1byte数据，放入U_data_buff中
             U_data_buff[U_RX_TX_byte_lenth_cnt]=RT_buff[0];
             ++U_RX_TX_byte_lenth_cnt;
 
-            u32IntStatus&=~BIT1;
+            u32IntStatus &= ~DRVUART_THREINT;
 
-            if((U_data_buff[0]==0xd0)||(U_data_buff[0]==0xd1)||(U_data_buff[0]==CLEAR_ADDR_1))
+            if((U_data_buff[0]==0xd0)||(U_data_buff[0]==0xd1)||(U_data_buff[0]==CLEAR_ADDR_1)) //判断从机地址是否为合法地址
             {
+				
                 i=U_data_buff[1];
                 i&=0x80;
-                if((i==0x80)&&(U_data_buff[1]!=CLEAR_ADDR_2))
+                if( (i==0x80) && (U_data_buff[1]!=CLEAR_ADDR_2) )
                 {
                     if(U_RX_TX_byte_lenth_cnt==5)
-                        Uart_tx_rx_fifo_int_FLAG|=BIT2;
-                    DrvGPIO_SetBit(E_GPB,6);
+                        Uart_tx_rx_fifo_int_FLAG |= BIT2;
+                    DrvGPIO_SetBit(E_GPB,6);//灭灯LED-COM1
                     Rx_TX_flag=0;
                 }
-
-                else if(U_RX_TX_byte_lenth_cnt == 3)
+                else if(U_RX_TX_byte_lenth_cnt == 3)//当接收到3个数据时
                 {
                     if(U_data_buff[2]==0x1F)
                     {
                         U2_disple_flag=1;
-                        DrvGPIO_SetBit(E_GPB,6);
+                        DrvGPIO_SetBit(E_GPB,6);//灭灯LED-COM1
                         Rx_TX_flag=0;
                         U_RX_TX_byte_lenth_cnt=0;
                     }
@@ -896,40 +860,33 @@ void UART1_IRQHandler_APP(uint32_t u32IntStatus)
                         if(U_RX_TX_byte_lenth_cnt>=2)
                         {
                             U2_disple_flag=1;
-                            DrvGPIO_SetBit(E_GPB,6);
+                            DrvGPIO_SetBit(E_GPB,6);//灭灯LED-COM1
                             Rx_TX_flag=0;
                         }
                     }
                     else
-                    {}
-
+                    {
+					}
                 }
-
-
-                // else if((U_data_buff[2]==0x60)&&(U_RX_TX_byte_lenth_cnt==2))
-                //{
-                // U_RX_TX_byte_lenth_cnt=0;
-                // Rx_TX_flag=0;
-                // }
-
-                else if((U_data_buff[1]==0x10)||(U_data_buff[1]==0x06))
+				//判断数据接收完成，并设置Uart_tx_rx_fifo_int_FLAG 与 Rx_TX_flag标志位
+                else if((U_data_buff[1]==0x10)||(U_data_buff[1]==0x06))//判断功能码
                 {
-                    if(U_RX_TX_byte_lenth_cnt==8)
+                    if(U_RX_TX_byte_lenth_cnt==8)//数据接收完成
                     {
                         Uart_tx_rx_fifo_int_FLAG|=BIT2;
                         DrvGPIO_SetBit(E_GPB,6);
                         Rx_TX_flag=0;
                     }
                 }
-                else if((U_RX_TX_byte_lenth_cnt==(U_data_buff[2]+5))&&(U_RX_TX_byte_lenth_cnt>=3))
+                else if( (U_RX_TX_byte_lenth_cnt == (U_data_buff[2]+5)) && (U_RX_TX_byte_lenth_cnt>=3) )
                 {
                     Uart_tx_rx_fifo_int_FLAG|=BIT2;
-                    DrvGPIO_SetBit(E_GPB,6);
+                    DrvGPIO_SetBit(E_GPB,6);//灭灯LED-COM1
                     Rx_TX_flag=0;
                 }
                 else if((Rx_TX_flag_local==2)&&(U_RX_TX_byte_lenth_cnt>=6))
                 {
-                    DrvGPIO_SetBit(E_GPB,6);
+                    DrvGPIO_SetBit(E_GPB,6);//灭灯LED-COM1
                     Rx_TX_flag_local=0;
                     Rx_TX_flag=0;
                 }
@@ -937,55 +894,22 @@ void UART1_IRQHandler_APP(uint32_t u32IntStatus)
             else
             {
                 U_RX_TX_byte_lenth_cnt=0;
-                DrvGPIO_SetBit(E_GPB,6);
+                DrvGPIO_SetBit(E_GPB,6);//灭灯LED-COM1
             }
         }
     }
     if(u32IntStatus & DRVUART_THREINT)
     {
-/////        RT_buff[0]=U_data_buff[U_RX_TX_byte_lenth_cnt];
-/////        ++U_RX_TX_byte_lenth_cnt;
-/////        if(U_RX_TX_byte_lenth_cnt<=U_RX_TX_byte_lenth)
-/////        {
-/////            DrvUART_Write(UART_PORT1,RT_buff,1);
-/////        }
-/////        else
-/////        {
-/////	   Uart_tx_rx_fifo_int_FLAG|=BIT3;
-        Dis_Uart012_THRE_int(UART_PORT1);
-/////	   U_RX_TX_byte_lenth_cnt=0x00;
-/////
-/////	   if(Rx_TX_flag_local==0x01)
-/////	      Rx_TX_flag_local=0;
-/////
-/////           u32delayno = 0;
-/////           while (tUART->FSR.TE_FLAG !=1)						    	/* Wait Tx empty */
-/////           {
-/////              u32delayno++;
-/////              if ( u32delayno >= 0x00400000 )
-/////              {
-/////                 Set_en_buzz_finc(4,4,200,100);
-/////////                 Debug_write_BJ(0x60000000);
-/////                 goto time_o;
-/////              }
-/////           }
-/////time_o:
-/////   	   Com1_rd_ctrl(0);
-/////   	   U_Rx_wait_time_flag_temp=0x8000;
-/////        }
+        Dis_Uart012_THRE_int(UART_PORT1);//禁止串口1发送中断
     }
 }
 
 //===============================================================================
 //	finction	:Uart2_rx_time_cnt
-//	input		:u32IntStatus
-//	output		:null
-//	return		:null
 //	edit		:sam 2012.06.08
-//	modefy		:null
+//	description	:在TMR1_IRQHandler函数中进行调用，用于判断串口2接收数据是否超时
 //===============================================================================
 uint8_t U2_rx_time_cnt;
-
 void Uart2_rx_time_cnt(void)
 {
     if(U2_rx_Flag==1)
@@ -993,8 +917,8 @@ void Uart2_rx_time_cnt(void)
         ++U2_rx_time_cnt;
         if(U2_rx_time_cnt==20)
         {
-            U2_rx_Flag=U2_rx_time_cnt=0;
-            re_table2[0]=0;
+            U2_rx_Flag = U2_rx_time_cnt = 0;//标志与计数清零
+            re_table2[0]=0;//清空串口2接收缓存的0位
         }
     }
 }
@@ -1002,8 +926,6 @@ void Uart2_rx_time_cnt(void)
 //===============================================================================
 //	finction	:UART2_IRQHandler_APP	串口2收发中断函数
 //	input		:u32IntStatus
-//	output		:null
-//	return		:null
 //	edit		:sam 2012.06.08
 //	modefy		:null
 //===============================================================================
@@ -1023,67 +945,57 @@ void UART2_IRQHandler_APP(uint32_t u32IntStatus)
         while(UART2->ISR.RDA_IF==1) 		//RXD INT READ DATA
         {
             UART2->ISR.RDA_IF=0;
-            GPIOB->DMASK=0X0000EFFF;		//liaght led
+            GPIOB->DMASK=0X0000EFFF;		//liaght led-COM2（PB12）
             GPIOB->DOUT=0X00000000;
             GPIOB->DMASK=0X00000000;
-
-//    	    u32IntStatus&=~BIT1;
 
 #ifdef  __UART_TEST__
             DrvUART_Read(UART_PORT2,re_table2,1);
             UART2->ISR.RDA_IF=0;
-            GPIOB->DMASK=0X0000EFFF;		//dark led
+            GPIOB->DMASK=0X0000EFFF;		//dark led-COM2(PB12)
             GPIOB->DOUT|=0X00001000;
             GPIOB->DMASK=0X00000000;
 #else
             if(U2_rx_cnt==0)
             {
-                DrvUART_Read(UART_PORT2,re_table2,1);
+                DrvUART_Read(UART_PORT2,re_table2,1);//读取1byte数据
 
-//    	       if(re_table2[0]==0x10)
-                if(re_table2[0]==Machine_note_use)
+                if(re_table2[0]==Machine_note_use)//判断机器节点
                 {
                     U2_re_table[U2_rx_cnt]=re_table2[0];
-                    U2_rx_Flag=1;
+                    U2_rx_Flag=1;//开启超时
                     ++U2_rx_cnt;
                     U2_rx_time_cnt=0;
                 }
-                else
+                else//非法数据，不继续接收
                 {
                     U2_rx_Flag=0;
                     U2_rx_time_cnt=0;
                     re_table2[0]=0;
                     UART2->ISR.RDA_IF=0;
-                    GPIOB->DMASK=0X0000EFFF;		//dark led
+                    GPIOB->DMASK=0X0000EFFF;		//dark led-COM2(PB12)
                     GPIOB->DOUT|=0X00001000;
                     GPIOB->DMASK=0X00000000;
                 }
             }
-
-            else if(U2_rx_Flag==1)
+            else if(U2_rx_Flag==1)//该标志位一定时间后清0 ，用于保证接收的串口数据位连续的
             {
                 DrvUART_Read(UART_PORT2,re_table2,1);
                 U2_re_table[U2_rx_cnt]=re_table2[0];
                 ++U2_rx_cnt;
 
-                if(U2_rx_cnt==8)
+                if(U2_rx_cnt==8)//数据接收完成
                 {
                     U2_rx_Flag=0;
                     U2_rx_cnt=0;
                     U2_rx_time_cnt=0;
-
-//    	       	  if((U2_re_table[1]==0x06)||(U2_re_table[1]==0x55)||(U2_re_table[1]==0x65))
-//    	       	  U2_disple_flag=1;
-//    	       	  else
                     Uart_tx_rx_fifo_int_FLAG|=BIT4;
-
-/////	          DrvSYS_Delay(2000);
-/////	          Com2_rd_ctrl(1);
-
+					
                     GPIOB->DMASK=0X0000EFFF;		//dark led
                     GPIOB->DOUT|=0X00001000;
                     GPIOB->DMASK=0X00000000;
-                    Dis_Uart012_THRE_int(UART_PORT2);
+					
+                    Dis_Uart012_THRE_int(UART_PORT2);//禁止串口中断
                     UART2->ISR.RDA_IF=0;
                 }
             }
@@ -1097,56 +1009,23 @@ void UART2_IRQHandler_APP(uint32_t u32IntStatus)
     }
     else
     {
-#ifdef  __UART_TEST__
         u32IntStatus_flag=i;
-        u32IntStatus_flag&=DRVUART_THREINT;
-//        if(u32IntStatus_flag==DRVUART_THREINT)
-//        {
-//           DrvUART_ClearIntFlag(UART_PORT2,DRVUART_THREINT_FLAG);
-//
-//           re_table2[0]=Test_potocal_buff[Test_potocal_data_lenth_cnt];
-//           ++Test_potocal_data_lenth_cnt;
-//           if(Test_potocal_data_lenth_cnt<=Test_potocal_data_lenth)
-//           {
-//               DrvUART_Write(UART_PORT2,re_table2,1);
-//           }
-//           else
-//           {
-//	       Dis_Uart012_THRE_int(UART_PORT2);
-//
-//	       Test_potocal_data_lenth_cnt=0;
-//   	       u32delayno = 0;
-//               while (tUART->FSR.TE_FLAG !=1)				/* Wait Tx empty */
-//               {
-//                  u32delayno++;
-//                  if ( u32delayno >= 0x00400000 )
-//                  {
-//                     Set_en_buzz_finc(4,4,200,100);
-//                     goto time_o1;
-//                  }
-//               }
-//time_o1:
-//   	       Com2_rd_ctrl(0);
-//   	       DrvGPIO_SetBit(E_GPB,12);
-//           }
-//        }
-#else
-        u32IntStatus_flag=i;
-        u32IntStatus_flag&=DRVUART_THREINT;
-        if((u32IntStatus_flag==DRVUART_THREINT)&&(U2_tx_Flag==1))
+        u32IntStatus_flag &= DRVUART_THREINT;
+		/* Transmit Holding Register Empty Interrupt */
+        if((u32IntStatus_flag==DRVUART_THREINT) && (U2_tx_Flag==1))
         {
-            DrvUART_ClearIntFlag(UART_PORT2,DRVUART_THREINT_FLAG);
+            DrvUART_ClearIntFlag(UART_PORT2, DRVUART_THREINT_FLAG);
 
             re_table2[0]=U2_re_table[U2_rx_cnt];
             ++U2_rx_cnt;
             if(U2_rx_cnt<=U2_TX_byte_lenth)
             {
-                DrvUART_Write(UART_PORT2,re_table2,1);
+                DrvUART_Write(UART_PORT2,re_table2,1);//发送1byte数据
             }
-            else
+            else//数据发送完成
             {
                 Uart_tx_rx_fifo_int_FLAG|=BIT5;
-                Dis_Uart012_THRE_int(UART_PORT2);
+                Dis_Uart012_THRE_int(UART_PORT2);//禁用中断
 
                 U2_tx_Flag=U2_rx_cnt=0;
                 u32delayno = 0;
@@ -1156,34 +1035,29 @@ void UART2_IRQHandler_APP(uint32_t u32IntStatus)
                     if ( u32delayno >= 0x00400000 )
                     {
                         Set_en_buzz_finc(4,4,200,100);
-                        ////                  Debug_write_BJ(0x60000000);
                         goto time_o;
                     }
                 }
 time_o:
-                Com2_rd_ctrl(0);
+                Com2_rd_ctrl(0);//设置为接收模式
             }
         }
-#endif
     }
 }
 
 //===============================================================================
 //	finction	:Uart2_start_tx
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-10-9 10:28
 //	modefy		:null
 //===============================================================================
 void Uart2_start_tx(void)
 {
-    Com2_rd_ctrl(1);
-    DrvGPIO_ClrBit(E_GPB,12);
+    Com2_rd_ctrl(1);//设置为发送模式
+    DrvGPIO_ClrBit(E_GPB,12);//点灯LED-COM2
     DrvSYS_Delay(2000);				//delay 1ms
-    U2_tx_Flag=U2_rx_cnt=1;
-    DrvUART_Write(UART_PORT2,U2_re_table,1);
-    En_Uart012_THRE_int(UART_PORT2);
+    U2_tx_Flag = U2_rx_cnt = 1;
+    DrvUART_Write(UART_PORT2,U2_re_table,1);//发送1byte数据
+    En_Uart012_THRE_int(UART_PORT2);//使能发送中断
 }
 
 //===============================================================================
@@ -1237,45 +1111,7 @@ void Init_UART012(void)
     U2_tx_Flag=U2_rx_Flag=U2_rx_cnt=0;
 }
 
-//===============================================================================
-//	finction	:Uart 1 initial		初始化串口1
-//	input		:null
-//	output		:null
-//	return		:null
-//	edit		:sam 2014-2-10 10:27
-//	modefy		:null
-//===============================================================================
-void Reset_init_UART1(int8_t select)
-{
-    STR_UART_T  sParam;
 
-    /* Enable UART clock */
-    //DrvSYS_SelectIPClockSource(E_SYS_UART_CLKSRC,0);
-    DrvUART_Close(UART_PORT1);
-    DrvSYS_Delay(100000);
-
-    SYSCLK->CLKSEL1.UART_S = 0;				//UART clock select 12MHz
-    SYSCLK->CLKDIV.UART_N = 0;
-
-    if(select==1)
-    {
-        sParam.u32BaudRate 		= 9600;
-    }
-    else
-    {
-        sParam.u32BaudRate 		= 38400;
-    }
-    /* UART Setting */
-    sParam.u8cDataBits 		= DRVUART_DATABITS_8;
-    sParam.u8cParity 		= DRVUART_PARITY_NONE;
-    sParam.u8cRxTriggerLevel    = DRVUART_FIFO_1BYTES;		//DRVUART_FIFO_1BYTES
-    sParam.u8cStopBits 		= DRVUART_STOPBITS_2;
-
-    DrvUART_Open(UART_PORT1,&sParam);
-    /* Set CALL BACK FINCTION */
-    DrvUART_EnableInt(UART_PORT1,(DRVUART_RDAINT ),UART1_IRQHandler_APP);
-    Com1_rd_ctrl(0);
-}
 
 //===============================================================================
 //	finction	:Wait_slave_return_time
@@ -1287,10 +1123,9 @@ void Reset_init_UART1(int8_t select)
 //===============================================================================
 void Wait_slave_return_time(void)
 {
-    if((U_Rx_wait_time_flag_temp>=0x8000)&&(U_Rx_wait_time_flag_temp<0x8bb9))
+    if( (U_Rx_wait_time_flag_temp>=0x8000) && (U_Rx_wait_time_flag_temp<0x8bb9) )
     {
         ++U_Rx_wait_time_flag_temp;
-///    	if(U_Rx_wait_time_flag_temp==0x8020)		//20 sec    10ms
         if(U_Rx_wait_time_flag_temp==0x8bb8)		//30 sec    10ms
         {
             U_Rx_wait_time_flag_temp=0x7fff;
@@ -1305,17 +1140,11 @@ void Wait_slave_return_time(void)
 //			 start_adds
 //			 data_lenth
 //			 save_data_lenth
-//	output		:null
-//	return		:null
-//	edit		:sam 2012.06.13
-//	modefy		:null
 //===============================================================================
 void Set_tx_cmd_data_finc(int8_t slave_adds,int8_t cmd,int16_t start_adds,int16_t data_lenth,int8_t save_data_lenth)
 {
-/////   uint16_t i;
-/////   for(i=0;i<40;i++)
     DrvSYS_Delay(6000000);		//delay 0.5s
-    Uart_tx_rx_fifo_int_FLAG&=0xf9;	//clear bit2,3
+    Uart_tx_rx_fifo_int_FLAG &= 0xf9;	//clear bit2,3
 
     U_slave_add_temp=slave_adds;
     U_cmd_temp=cmd;
@@ -1341,20 +1170,20 @@ void Uart012_FIFO_INT_CTRL(void)
     uint16_t i,j;
     uint32_t result;
     //------------------------------------UART0
-    if(Uart_tx_rx_fifo_int_FLAG&BIT0)
+    if(Uart_tx_rx_fifo_int_FLAG&BIT0)//UART0 Rx Finished
     {
         Uart_tx_rx_fifo_int_FLAG&=~BIT0;
-        DrvUART_Write(UART_PORT0,re_table0,1);
-        En_Uart012_THRE_int(UART_PORT0);
-        DrvGPIO_SetBit(E_GPB,13);
+        DrvUART_Write(UART_PORT0,re_table0,1);//发送1byte数据
+        En_Uart012_THRE_int(UART_PORT0);      //使能中断
+        DrvGPIO_SetBit(E_GPB,13);//灭灯LED-COM0
     }
-    if(Uart_tx_rx_fifo_int_FLAG&BIT1)
+    if(Uart_tx_rx_fifo_int_FLAG&BIT1)//UART0 Tx Finished
     {
         Uart_tx_rx_fifo_int_FLAG&=~BIT1;
-        DrvGPIO_SetBit(E_GPB,13);
+        DrvGPIO_SetBit(E_GPB,13);//灭灯LED-COM0
     }
     //------------------------------------UART1
-    if(Uart_tx_rx_fifo_int_FLAG&BIT2)
+    if(Uart_tx_rx_fifo_int_FLAG&BIT2)//UART2 Rx Finished
     {
         Uart_tx_rx_fifo_int_FLAG&=~BIT2;
 
@@ -1363,18 +1192,17 @@ void Uart012_FIFO_INT_CTRL(void)
         j=j<<8;
         j+=U_data_buff[U_RX_TX_byte_lenth_cnt-2];
 
-        if(j==i)
+        if(j==i)//校验通过
         {
-            if((U_cmd_temp==U_data_buff[1])&&(U_slave_add_temp==U_data_buff[0]))
+            if((U_cmd_temp==U_data_buff[1]) && (U_slave_add_temp==U_data_buff[0]))//判断从机地址与功能码
                 __nop();
-            else
+            else //数据错误，在显示屏显示错误信息
             {
                 mm=U_data_buff[1];
                 mm&=0x80;
                 if(mm==0x80)					//slave module return erro message
                 {
                     Get_write_struct_data(3,2,0,0,0,0);		//记录错误信息
-/////	         Program_reset_initial();			//reset all prog data.
                     Set_en_buzz_finc(4,4,200,100);
                     Led_data_flag|=BIT0;
                     Led_port_status|=BIT1;
@@ -1440,9 +1268,6 @@ void Uart012_FIFO_INT_CTRL(void)
 
         DrvGPIO_SetBit(E_GPB,12);
 
-#ifdef  __UART_TEST__
-
-#else
         i=CRC16(U2_re_table,6);
         j=U2_re_table[7];
         j=j<<8;
@@ -1450,13 +1275,10 @@ void Uart012_FIFO_INT_CTRL(void)
 
         if(j==i)			//crc ok
         {
-            //check busy
-/////	   if((Pro_power_on_flag==0)&&(Hand_finction_select==0)&&(Hand_finction_step_select==0)&&(Menu_lever3_start_flag<0x10)&&(M_lever4_extern_trrig_flag==1))
-            if((Pro_power_on_flag==0)&&(M_lever4_extern_trrig_flag==1))
+			if( (Pro_power_on_flag==0) && (M_lever4_extern_trrig_flag==1) ) 
             {
                 if(U2_re_table[1]==0x03)		//read
                 {
-                    //U2_re_table[0]=0x10;
                     U2_re_table[1]=0x03;
                     U2_re_table[0]=Machine_note_use;
                     switch(U2_re_table[3])
@@ -1464,9 +1286,9 @@ void Uart012_FIFO_INT_CTRL(void)
                     case 0x00:
                         U2_re_table[2]=0x02;
                         U2_re_table[3]=0x00;
-                        U2_re_table[4]=M_menur1_analy_obj_select_temp;		//
+                        U2_re_table[4]=M_menur1_analy_obj_select_temp;//1:NH4-N 2:PO4 3:Cu 4:CN
 
-                        i=CRC16(U2_re_table,5);
+                        i=CRC16(U2_re_table,5);//CRC
                         U2_re_table[5]=i;
                         U2_re_table[6]=i>>8;
 
@@ -1475,7 +1297,7 @@ void Uart012_FIFO_INT_CTRL(void)
                     case 0x02:
                         U2_re_table[2]=0x02;
                         U2_re_table[3]=0x00;
-                        U2_re_table[4]=M_menur1_unit_select_temp;		//
+                        U2_re_table[4]=M_menur1_unit_select_temp;//单位选择
 
                         i=CRC16(U2_re_table,5);
                         U2_re_table[5]=i;
@@ -1486,7 +1308,7 @@ void Uart012_FIFO_INT_CTRL(void)
                     case 0x04:
                         U2_re_table[2]=0x04;
 
-                        Read_last_result(FX_write_index_adds_point,1,2);
+                        Read_last_result(FX_write_index_adds_point,1,2);//初始化U2_re_table中的第3位-6位
                         i=CRC16(U2_re_table,7);
 
                         U2_re_table[7]=i;
@@ -1496,7 +1318,7 @@ void Uart012_FIFO_INT_CTRL(void)
                     case 0x06:
                         U2_re_table[2]=0x06;
 
-                        Read_last_result(FX_write_index_adds_point,1,1);
+                        Read_last_result(FX_write_index_adds_point,1,1);//初始化U2_re_table中的第3位-8位
 
                         i=CRC16(U2_re_table,9);
                         U2_re_table[9]=i;
@@ -1719,8 +1541,6 @@ void Uart012_FIFO_INT_CTRL(void)
                             else
                                 Display_menu_index();
                         }
-/////                        Program_reset_initial();			//reset all prog data.
-/////                        Hand_finction_select=0;
                         Program_reset_initial_flag=1;
                         Program_reset_initial_cnt=0;
                         break;
@@ -1743,13 +1563,7 @@ void Uart012_FIFO_INT_CTRL(void)
                         Menu_lever3_start_flag=BIT4;
                         break;
                     case 0x1F:
-                        //Memu1_hand_step_status=0;
-                        //Pro_step_status=0;
-                        //M_lever4_FXCS_cnt=0;
                         Clear_n_page(0,7);
-
-                        //Menu_lever3_start_flag=BIT5;
-
                         Menu_lever3_start_flag&=~BIT1;
                         Menu_lever3_start_flag=BIT5;
                         Memu1_auto_step_status=0;
@@ -1792,7 +1606,7 @@ void Uart012_FIFO_INT_CTRL(void)
 
                     U2_TX_byte_lenth=0x07;
                 }
-                else if((U2_re_table[3]==0x1d))			//stop all run finction
+                else if(U2_re_table[3]==0x1d)			//stop all run finction
                 {
                     if(Prog_disp_flag==1)
                     {
@@ -1801,8 +1615,6 @@ void Uart012_FIFO_INT_CTRL(void)
                         else
                             Display_menu_index();
                     }
-/////                    Program_reset_initial();			//reset all prog data.
-/////                    Hand_finction_select=0;
                     Program_reset_initial_flag=1;
                     Program_reset_initial_cnt=0;
 
@@ -1857,20 +1669,20 @@ void Uart012_FIFO_INT_CTRL(void)
                         break;
                     }
                 }
-                else U2_TX_byte_lenth=0x08;
+                else 
+					U2_TX_byte_lenth=0x08;
                 Uart2_start_tx();
             }
         }
-        else
+        else//CRC ERROR
         {
             U2_rx_cnt=0;
             re_table2[0]=re_table2[1]=0;
             Com2_rd_ctrl(0);
             DrvGPIO_SetBit(E_GPB,12);
         }
-#endif
     }
-    if(Uart_tx_rx_fifo_int_FLAG&BIT5)
+    if(Uart_tx_rx_fifo_int_FLAG&BIT5)//UART2 Tx Finished
     {
         Uart_tx_rx_fifo_int_FLAG&=~BIT5;
 
@@ -1886,24 +1698,6 @@ void Uart012_FIFO_INT_CTRL(void)
         i&=BIT1;
         if(i==BIT1)
             goto  erro_exit;
-
-////	Led_data_flag|=BIT0;
-////	Led_port_status|=BIT1;
-
-/////        data_buff[0]=Get_ascii_data('E');
-/////        data_buff[1]=Get_ascii_data('R');
-/////        data_buff[2]=Get_ascii_data('R');
-/////        data_buff[3]=20;
-/////        data_buff[4]=Get_ascii_data('T');
-/////        data_buff[5]=Get_ascii_data('I');
-/////        data_buff[6]=Get_ascii_data('M');
-/////        data_buff[7]=Get_ascii_data('E');
-/////        data_buff[8]=0;
-/////        data_buff[9]=Get_ascii_data('O');
-/////        data_buff[10]=Get_ascii_data('U');
-/////        data_buff[11]=Get_ascii_data('T');
-
-
         data_buff[0]=Get_ascii_data('E');
         data_buff[1]=Get_ascii_data('R');
         data_buff[2]=Get_ascii_data('R');
@@ -1914,7 +1708,7 @@ void Uart012_FIFO_INT_CTRL(void)
         LCD_disp_flag=1;
         Clear_apage(6);
         Display_6x8_char(6,18,6,data_buff);
-////erro_clr:
+
         for(i=0; i<256; i++)
         {
             U_data_buff[i]=0;
@@ -1927,170 +1721,10 @@ void Uart012_FIFO_INT_CTRL(void)
         U_RX_TX_byte_lenth_cnt=0;
         U_Rx_wait_time_flag_temp=0;
 
-////	    i=Led_port_status;
-////		i&=BIT1;
-////		if(i==BIT1)
-////		   goto  erro_exit;
-
         Set_en_buzz_finc(4,4,200,100);
-////        Program_reset_initial();	//reset all prog data.
     }
 erro_exit:
     __nop();
 }
-
-//===============================================================================
-//	finction	:tx_jisuan_data		用于测试返回斜率不对时相关参数的值，用于DEBUG
-//	input		:null
-//	output		:null
-//	return		:null
-//	edit		:sam 2013-4-25 16:01
-//	modefy		:null
-//===============================================================================
-float    jisuan_k_temp;
-void tx_jisuan_data(uint8_t fram)
-{
-    uint8_t i;
-    uint16_t crc;
-    uint32_t temp,temp1,temp2;
-
-    U2_re_table[0]=0x01;
-    U2_re_table[1]=0x10;
-    U2_re_table[2]=0x00;
-    U2_re_table[3]=0x00;
-    U2_re_table[4]=0x00;
-    U2_re_table[5]=0x1c;
-    U2_re_table[6]=0x38;
-    U2_re_table[7]=0x00;
-    U2_re_table[8]=fram;
-//------------------------------------------------
-    temp=M_menur1_sj1_v_temp<<12;
-    U2_re_table[9]=temp>>24;
-    U2_re_table[10]=temp>>16;
-    U2_re_table[11]=temp>>8;
-    U2_re_table[12]=temp;
-
-////    temp=M_menur1_sj2_v_temp<<12;		//
-
-    temp1=P_Tcall_temp;
-    temp2=temp1/100;
-    temp2<<=24;
-    temp|=temp2;
-    temp2=temp1/10;
-    temp2%=10;
-    temp2<<=20;
-    temp|=temp2;
-    temp2=temp1%10;
-    temp2<<=16;
-    temp|=temp2;
-    U2_re_table[13]=temp>>24;
-    U2_re_table[14]=temp>>16;
-    U2_re_table[15]=temp>>8;
-    U2_re_table[16]=temp;
-////    temp=M_menur1_sj3_v_temp<<12;		//
-    temp=Prj_correlat;
-    temp1=Prj_correlat;
-    temp<<=4;
-    temp1&=0xf0000000;
-    temp1|=temp;
-    U2_re_table[17]=temp1>>24;
-    U2_re_table[18]=temp1>>16;
-    U2_re_table[19]=temp1>>8;
-    U2_re_table[20]=temp1;
-
-////    temp=M_menur1_sj4_v_temp<<12;		//
-    temp1=E_ADC_temperature1;
-    i=temp1/1000;
-    temp=i<<28;
-    i=temp1/100;
-    i=i%10;
-    temp2=i<<24;
-    temp|=temp2;
-    i=temp1/10;
-    i=i%10;
-    temp2=i<<20;
-    temp|=temp2;
-    i=temp1%10;
-    temp2=i<<16;
-    temp|=temp2;
-    U2_re_table[21]=temp>>24;
-    U2_re_table[22]=temp>>16;
-    U2_re_table[23]=temp>>8;
-    U2_re_table[24]=temp;
-/////    U2_re_table[21]=Pro_power_on_flag;
-/////    U2_re_table[22]=Menu_lever3_start_flag;
-/////    U2_re_table[23]=Auto_check_clock_flag;
-/////    U2_re_table[24]=Pro_auto_time_dcnt;
-
-    temp=M_menur1_jz1_v_temp<<8;
-    U2_re_table[25]=temp>>24;
-    U2_re_table[26]=temp>>16;
-    U2_re_table[27]=temp>>8;
-    U2_re_table[28]=temp;
-    temp=M_menur1_jz2_v_temp<<8;
-    U2_re_table[29]=temp>>24;
-    U2_re_table[30]=temp>>16;
-    U2_re_table[31]=temp>>8;
-    U2_re_table[32]=temp;
-    temp=M_menur1_jz1nd_temp<<8;
-    U2_re_table[33]=temp>>24;
-    U2_re_table[34]=temp>>16;
-    U2_re_table[35]=temp>>8;
-    U2_re_table[36]=temp;
-    temp=M_menur1_jz2nd_temp<<12;
-    U2_re_table[37]=temp>>24;
-    U2_re_table[38]=temp>>16;
-    U2_re_table[39]=temp>>8;
-    U2_re_table[40]=temp;
-//------------------------------
-    U2_re_table[41]=M_menur1_slope_flag;
-    U2_re_table[42]=Rx_TX_flag;
-
-    temp=M_menur1_slope_temp<<8;
-    U2_re_table[43]=temp>>24;
-    U2_re_table[44]=temp>>16;
-    U2_re_table[45]=temp>>8;
-    U2_re_table[46]=temp;
-
-    temp=Float_to_int_reg(c2_temp);;
-    U2_re_table[47]=temp>>24;
-    U2_re_table[48]=temp>>16;
-    U2_re_table[49]=temp>>8;
-    U2_re_table[50]=temp;
-
-    if(Measurement_signal_21>31250) temp=Measurement_signal_21-31250;
-    else                            temp=31250-Measurement_signal_21;
-    temp=Float_to_int_reg_ee2(temp);
-    U2_re_table[51]=temp>>24;
-    U2_re_table[52]=temp>>16;
-    U2_re_table[53]=temp>>8;
-    U2_re_table[54]=temp;
-
-    if(Measurement_signal_22>31250) temp=Measurement_signal_22-31250;
-    else                            temp=31250-Measurement_signal_22;
-    temp=Float_to_int_reg_ee2(temp);
-    U2_re_table[55]=temp>>24;
-    U2_re_table[56]=temp>>16;
-    U2_re_table[57]=temp>>8;
-    U2_re_table[58]=temp;
-
-    if(jisuan_k_temp>0) i=1;
-    else i=0;
-    temp=Float_to_int_reg_ee(jisuan_k_temp);
-    temp<<=4;
-    if(i==1) temp|=0x10000000;
-
-    U2_re_table[59]=temp>>24;
-    U2_re_table[60]=temp>>16;
-    U2_re_table[61]=temp>>8;
-    U2_re_table[62]=temp;
-//------------------------------------------------   CRC
-    crc=CRC16(U2_re_table,63);
-    U2_re_table[64]=crc>>8;
-    U2_re_table[63]=crc;
-    U2_TX_byte_lenth=65;
-    Uart2_start_tx();
-}
-
 
 

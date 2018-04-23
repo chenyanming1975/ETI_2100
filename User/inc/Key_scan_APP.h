@@ -34,14 +34,14 @@ volatile uint8_t fix_axbc_falg;
 
 volatile uint8_t fix_start_time_falg;
 
-uint8_t Pwm_menu_lever;
-uint8_t Pwm_menu_select;
-uint8_t Pwm_menu_select1;
+uint8_t Pwm_menu_lever;//用于记录界面深度
+uint8_t Pwm_menu_select;//用于纪录 选择了(结果/温度/校正) 中的哪一个菜单项
+uint8_t Pwm_menu_select1;//用于纪录选择了(4ma设置/20ma设置/4ma对应值/20ma对应值/输出测试) 中的哪一个菜单项
 uint8_t Pwm_menu_bit_temp;
 uint8_t Pwm_menu_PoSeg;
 uint8_t Pwm_menu_PoSeg_pub;
-uint8_t Pwm_select_cnt;
-uint8_t Pwm_adj_cnt;
+uint8_t Pwm_select_cnt;//用于记录设置数值中的哪一位(例如:个位)
+uint8_t Pwm_adj_cnt;//设置数据时,用于记录当前值
 
 void Get_uart_note(void);
 

@@ -113,15 +113,9 @@ volatile uint8_t		U2_P_hour;
 volatile uint8_t		U2_P_minu;
 #endif 
 
-#define PUTCHAR_PROTOTYPE unsigned short fputc_new(unsigned short ch, FILE *f)		//2012.10.19    add sam for printf
-
 #else
 extern volatile uint8_t		Rx_TX_flag;		//2012-7-19 9:14
 
-extern volatile uint8_t 	U_slave_add_temp;
-extern volatile uint8_t 	U_cmd_temp;
-extern volatile uint8_t 	U_save_data_lenth;
-extern volatile uint16_t 	U_read_write_data_lenth;
 extern volatile uint16_t	U_start_adds_temp;
 
 extern uint8_t		U_data_buff[256];
@@ -137,14 +131,12 @@ extern volatile uint8_t         Uart2_STOP_select_temp;
 extern void Init_UART012(void);
 extern void Com1_rd_ctrl(uint8_t RD1_01);
 extern void Com2_rd_ctrl(uint8_t RD2_01);
-extern void UART0_IRQHandler_APP(uint32_t u32IntStatus);
 extern void UART1_IRQHandler_APP(uint32_t u32IntStatus);
 extern void UART2_IRQHandler_APP(uint32_t u32IntStatus);
 extern void En_Uart012_THRE_int(uint32_t uPort);
 extern void Uart012_FIFO_INT_CTRL(void);
 
 extern uint16_t CRC16(uint8_t *_data,uint8_t length);
-extern void Set_tx_data_and_start_tx(void);
 extern void Wait_slave_return_time(void);
 extern void Set_tx_cmd_data_finc(int8_t slave_adds,int8_t cmd,int16_t start_adds,int16_t data_lenth,int8_t save_data_lenth);
 
@@ -175,11 +167,6 @@ extern volatile uint8_t		Test_potocal_time_flag;
 extern volatile uint8_t		Test_potocal_time_cnt;
 extern volatile uint16_t	Test_potocal_time_mini_cnt;
 
-extern float    jisuan_k_temp;
-extern void tx_jisuan_data(uint8_t fram);
-
-
-extern Reset_init_UART1(int8_t select);
 #endif
 
 

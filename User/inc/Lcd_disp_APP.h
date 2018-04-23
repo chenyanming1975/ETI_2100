@@ -172,7 +172,6 @@ extern void Display_program_menu(uint8_t num,uint8_t disp_buff[]);
 extern void Display_program_result(uint8_t num);
 extern void Display_program_5opration(uint8_t num,uint8_t disp_buff[]);
 extern uint8_t Get_ascii_data(uint8_t data);
-extern void Disp_input_switch_status(uint8_t select);
 extern void Disp_rtc_clock_wait(void);
 extern void Display_program_5opration_re(uint8_t num,uint8_t disp_buff[]);
 

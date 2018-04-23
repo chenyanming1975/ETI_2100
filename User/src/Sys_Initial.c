@@ -68,11 +68,8 @@ uint32_t Get_buff_32bit_data(uint8_t adds)
 
 //===============================================================================
 //	finction	:Buff_get_reg_32bit_data
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-13 10:20
-//	modefy		:null
+//	modefy		:将data写入buff_page_w缓存中adds下标的位置
 //===============================================================================
 void Buff_get_reg_32bit_data(uint8_t adds,uint32_t data)
 {
@@ -84,97 +81,94 @@ void Buff_get_reg_32bit_data(uint8_t adds,uint32_t data)
 
 //===============================================================================
 //	finction	:Set_system_reg_to_buff		按位置排好参数位置
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-13 10:20
-//	modefy		:null
+//	modefy		:将各种参数的值 写入buff_page_w缓存中
 //===============================================================================
 void Set_system_reg_to_buff(void)
 {
-    buff_page_w[0]=M_dongtai_flag;
-    buff_page_w[1]=M_menur1_lcd_Contrast_temp;
-    buff_page_w[2]=M_menur1_language_select_temp;
-    buff_page_w[3]=M_menur1_analy_obj_select_temp;
-    buff_page_w[4]=M_menur1_unit_select_temp;
-    buff_page_w[5]=M_menur1_dot_num_select_temp;
-    buff_page_w[6]=M_menur1_ZDXS_select_temp;
-    buff_page_w[7]=M_menur1_LZDJ_select_temp;
-    buff_page_w[8]=M_menur1_DL_select_temp;
-    buff_page_w[9]=M_menur1_direction_select_temp;
-    buff_page_w[10]=M_menur1_led_data_temp>>8;
+    buff_page_w[0]=M_dongtai_flag;               //动态标志
+    buff_page_w[1]=M_menur1_lcd_Contrast_temp;   //LCD鬼影微调
+    buff_page_w[2]=M_menur1_language_select_temp;//语言选择
+    buff_page_w[3]=M_menur1_analy_obj_select_temp;//分析对象选择 1:NH4-N 2:PO4 3:Cu 4:CN
+    buff_page_w[4]=M_menur1_unit_select_temp;    //单位选择
+    buff_page_w[5]=M_menur1_dot_num_select_temp; //小数点位数选择
+    buff_page_w[6]=M_menur1_ZDXS_select_temp;    //自动稀释选择
+    buff_page_w[7]=M_menur1_LZDJ_select_temp;    //离子电子 2012-7-10 16:35
+    buff_page_w[8]=M_menur1_DL_select_temp;      //定量方法 
+    buff_page_w[9]=M_menur1_direction_select_temp;//搅拌方向
+    buff_page_w[10]=M_menur1_led_data_temp>>8;   //波长
     buff_page_w[11]=M_menur1_led_data_temp;
 
-    Buff_get_reg_32bit_data(M_menur1_lange_data_temp_ADDS,M_menur1_lange_data_temp);
-    Buff_get_reg_32bit_data(M_menur1_led_dianliu_temp_ADDS,M_menur1_led_dianliu_temp);
-    Buff_get_reg_32bit_data(M_menur1_JB_speed_temp_ADDS,M_menur1_JB_speed_temp);
-    Buff_get_reg_32bit_data(M_menur1_ZSB_speed_temp_ADDS,M_menur1_ZSB_speed_temp);
-    Buff_get_reg_32bit_data(M_menur1_sample_v_temp_ADDS,M_menur1_sample_v_temp);
+    Buff_get_reg_32bit_data(M_menur1_lange_data_temp_ADDS,M_menur1_lange_data_temp);  //buff_page_w的12位：量程选择
+    Buff_get_reg_32bit_data(M_menur1_led_dianliu_temp_ADDS,M_menur1_led_dianliu_temp);//LED电流设置
+    Buff_get_reg_32bit_data(M_menur1_JB_speed_temp_ADDS,M_menur1_JB_speed_temp);      //搅拌速度
+    Buff_get_reg_32bit_data(M_menur1_ZSB_speed_temp_ADDS,M_menur1_ZSB_speed_temp);    //注射泵速度
+    Buff_get_reg_32bit_data(M_menur1_sample_v_temp_ADDS,M_menur1_sample_v_temp);      //样品体积
 
-    Buff_get_reg_32bit_data(M_menur1_slope_temp_ADDS,M_menur1_slope_temp);
-    buff_page_w[M_menur1_slope_flag_ADDS]=M_menur1_slope_flag;
-    buff_page_w[Updata_slope_flag_ADDS]=Updata_slope_flag;
+    Buff_get_reg_32bit_data(M_menur1_slope_temp_ADDS,M_menur1_slope_temp);//当前使用的斜率            
+    buff_page_w[M_menur1_slope_flag_ADDS]=M_menur1_slope_flag;//当前使用的斜率符号
+    buff_page_w[Updata_slope_flag_ADDS]=Updata_slope_flag;    //当前使用斜率允许更新标志
 
-    Buff_get_reg_32bit_data(M_menur1_jz1nd_temp_ADDS,M_menur1_jz1nd_temp);
-    Buff_get_reg_32bit_data(M_menur1_jz1_v_temp_ADDS,M_menur1_jz1_v_temp);
-    Buff_get_reg_32bit_data(M_menur1_jz2nd_temp_ADDS,M_menur1_jz2nd_temp);
-    Buff_get_reg_32bit_data(M_menur1_jz2_v_temp_ADDS,M_menur1_jz2_v_temp);
-    Buff_get_reg_32bit_data(M_menur1_sj1_v_temp_ADDS,M_menur1_sj1_v_temp);
-    Buff_get_reg_32bit_data(M_menur1_sj2_v_temp_ADDS,M_menur1_sj2_v_temp);
-    Buff_get_reg_32bit_data(M_menur1_sj3_v_temp_ADDS,M_menur1_sj3_v_temp);
-    Buff_get_reg_32bit_data(M_menur1_FY_temp_ADDS,M_menur1_FY_temp);
+    Buff_get_reg_32bit_data(M_menur1_jz1nd_temp_ADDS,M_menur1_jz1nd_temp);//标液1浓度
+    Buff_get_reg_32bit_data(M_menur1_jz1_v_temp_ADDS,M_menur1_jz1_v_temp);//标液1体积
+    Buff_get_reg_32bit_data(M_menur1_jz2nd_temp_ADDS,M_menur1_jz2nd_temp);//标液2浓度
+    Buff_get_reg_32bit_data(M_menur1_jz2_v_temp_ADDS,M_menur1_jz2_v_temp);//标液2体积
+    Buff_get_reg_32bit_data(M_menur1_sj1_v_temp_ADDS,M_menur1_sj1_v_temp);//试剂1体积
+    Buff_get_reg_32bit_data(M_menur1_sj2_v_temp_ADDS,M_menur1_sj2_v_temp);//试剂2体积
+    Buff_get_reg_32bit_data(M_menur1_sj3_v_temp_ADDS,M_menur1_sj3_v_temp);//试剂3体积
+    Buff_get_reg_32bit_data(M_menur1_FY_temp_ADDS,M_menur1_FY_temp);//校正方程的常熟，变量系数，变量和自变量
     Buff_get_reg_32bit_data(M_menur1_Fx_temp_ADDS,M_menur1_Fx_temp);
     Buff_get_reg_32bit_data(M_menur1_Fa_temp_ADDS,M_menur1_Fa_temp);
     Buff_get_reg_32bit_data(M_menur1_Fb_temp_ADDS,M_menur1_Fb_temp);
     Buff_get_reg_32bit_data(M_menur1_Fc_temp_ADDS,M_menur1_Fc_temp);
     Buff_get_reg_32bit_data(M_menur1_Fd_temp_ADDS,M_menur1_Fd_temp);
 
-    buff_page_w[M_menur1_RX_time_temp_ADDS]=M_menur1_RX_time_temp;
-    Buff_get_reg_32bit_data(M_menur1_QYSJ_temp_ADDS,M_menur1_QYSJ_temp);
-    Buff_get_reg_32bit_data(M_menur1_CSSJ_temp_ADDS,M_menur1_CSSJ_temp);
-    Buff_get_reg_32bit_data(M_menur1_XHPY_temp_ADDS,M_menur1_XHPY_temp);
-    Buff_get_reg_32bit_data(M_menur1_DDSJ_temp_ADDS,M_menur1_DDSJ_temp);
+    buff_page_w[M_menur1_RX_time_temp_ADDS]=M_menur1_RX_time_temp;      //润洗次数
+    Buff_get_reg_32bit_data(M_menur1_QYSJ_temp_ADDS,M_menur1_QYSJ_temp);//取样时间
+    Buff_get_reg_32bit_data(M_menur1_CSSJ_temp_ADDS,M_menur1_CSSJ_temp);//测试时间
+    Buff_get_reg_32bit_data(M_menur1_XHPY_temp_ADDS,M_menur1_XHPY_temp);//信号漂移
+    Buff_get_reg_32bit_data(M_menur1_DDSJ_temp_ADDS,M_menur1_DDSJ_temp);//等待时间
 
-    Buff_get_reg_32bit_data(M_lever4_FXPL_temp_ADDS,M_lever4_FXPL_temp);
+    Buff_get_reg_32bit_data(M_lever4_FXPL_temp_ADDS,M_lever4_FXPL_temp);//分析频率
 
-    Buff_get_reg_32bit_data(M_lever4_Out1_4ma_temp_ADDS,M_lever4_Out1_4ma_temp);
-    Buff_get_reg_32bit_data(M_lever4_Out1_20ma_temp_ADDS,M_lever4_Out1_20ma_temp);
+    Buff_get_reg_32bit_data(M_lever4_Out1_4ma_temp_ADDS,    M_lever4_Out1_4ma_temp);//以下是结果的4~20ma输出的寄存器
+    Buff_get_reg_32bit_data(M_lever4_Out1_20ma_temp_ADDS,   M_lever4_Out1_20ma_temp);
     Buff_get_reg_32bit_data(M_lever4_Out1_test_ma_temp_ADDS,M_lever4_Out1_test_ma_temp);
-    Buff_get_reg_32bit_data(M_lever4_Out2_4ma_temp_ADDS,M_lever4_Out2_4ma_temp);
-    Buff_get_reg_32bit_data(M_lever4_Out2_20ma_temp_ADDS,M_lever4_Out2_20ma_temp);
+    Buff_get_reg_32bit_data(M_lever4_Out2_4ma_temp_ADDS,    M_lever4_Out2_4ma_temp);
+    Buff_get_reg_32bit_data(M_lever4_Out2_20ma_temp_ADDS,   M_lever4_Out2_20ma_temp);
     Buff_get_reg_32bit_data(M_lever4_Out2_test_ma_temp_ADDS,M_lever4_Out2_test_ma_temp);
 
-    buff_page_w[M_lever4_extern_trrig_flag_ADDS]=M_lever4_extern_trrig_flag;
-    buff_page_w[M_lever3_BYHC_temp_ADDS]=M_lever3_BYHC_temp; 					//1=yes 2=no
+    buff_page_w[M_lever4_extern_trrig_flag_ADDS]=M_lever4_extern_trrig_flag;//外部触发标志
+    buff_page_w[M_lever3_BYHC_temp_ADDS]=M_lever3_BYHC_temp; 				//标液核查 	//1=yes 2=no
 
-    Buff_get_reg_32bit_data(M_lever3_HCPD_temp_ADDS,M_lever3_HCPD_temp);
-    Buff_get_reg_32bit_data(a_signle_flag_ADDS,a_signle_flag);
+    Buff_get_reg_32bit_data(M_lever3_HCPD_temp_ADDS,M_lever3_HCPD_temp);//核查判断 
+    Buff_get_reg_32bit_data(a_signle_flag_ADDS,a_signle_flag);          //校正方程的系数的符号
     Buff_get_reg_32bit_data(b_signle_flag_ADDS,b_signle_flag);
     Buff_get_reg_32bit_data(c_signle_flag_ADDS,c_signle_flag);
     Buff_get_reg_32bit_data(d_signle_flag_ADDS,d_signle_flag); 				//2012-11-6 10:07
-    Buff_get_reg_32bit_data(M_lever4_JZPL_temp_ADDS,M_lever4_JZPL_temp);
-    Buff_get_reg_32bit_data(M_lever4_QXPL_temp_ADDS,M_lever4_QXPL_temp);
-    Buff_get_reg_32bit_data(M_lever4_HCPL_temp_ADDS,M_lever4_HCPL_temp);
+    Buff_get_reg_32bit_data(M_lever4_JZPL_temp_ADDS,M_lever4_JZPL_temp);//校正频率
+    Buff_get_reg_32bit_data(M_lever4_QXPL_temp_ADDS,M_lever4_QXPL_temp);//清洗频率
+    Buff_get_reg_32bit_data(M_lever4_HCPL_temp_ADDS,M_lever4_HCPL_temp);//核查频率
 
-    Buff_get_reg_32bit_data(M_menur1_sj4_v_temp_ADDS,M_menur1_sj4_v_temp);
+    Buff_get_reg_32bit_data(M_menur1_sj4_v_temp_ADDS,M_menur1_sj4_v_temp);//试剂4体积
 
-    Buff_get_reg_32bit_data(M_lever4_tp_Out1_4ma_temp_ADDS,M_lever4_tp_Out1_4ma_temp);
-    Buff_get_reg_32bit_data(M_lever4_tp_Out1_20ma_temp_ADDS,M_lever4_tp_Out1_20ma_temp);
+    Buff_get_reg_32bit_data(M_lever4_tp_Out1_4ma_temp_ADDS,    M_lever4_tp_Out1_4ma_temp);//以下是温度的4~20ma输出的寄存器
+    Buff_get_reg_32bit_data(M_lever4_tp_Out1_20ma_temp_ADDS,   M_lever4_tp_Out1_20ma_temp);
     Buff_get_reg_32bit_data(M_lever4_tp_Out1_test_ma_temp_ADDS,M_lever4_tp_Out1_test_ma_temp);
-    Buff_get_reg_32bit_data(M_lever4_tp_Out2_4ma_temp_ADDS,M_lever4_tp_Out2_4ma_temp);
-    Buff_get_reg_32bit_data(M_lever4_tp_Out2_20ma_temp_ADDS,M_lever4_tp_Out2_20ma_temp);
+    Buff_get_reg_32bit_data(M_lever4_tp_Out2_4ma_temp_ADDS,    M_lever4_tp_Out2_4ma_temp);
+    Buff_get_reg_32bit_data(M_lever4_tp_Out2_20ma_temp_ADDS,   M_lever4_tp_Out2_20ma_temp);
     Buff_get_reg_32bit_data(M_lever4_tp_Out2_test_ma_temp_ADDS,M_lever4_tp_Out2_test_ma_temp);
 
-    Buff_get_reg_32bit_data(M_lever4_jz_Out1_4ma_temp_ADDS,M_lever4_jz_Out1_4ma_temp);
-    Buff_get_reg_32bit_data(M_lever4_jz_Out1_20ma_temp_ADDS,M_lever4_jz_Out1_20ma_temp);
+    Buff_get_reg_32bit_data(M_lever4_jz_Out1_4ma_temp_ADDS,    M_lever4_jz_Out1_4ma_temp);//以下是校正结果的4~20ma输出的寄存器
+    Buff_get_reg_32bit_data(M_lever4_jz_Out1_20ma_temp_ADDS,   M_lever4_jz_Out1_20ma_temp);
     Buff_get_reg_32bit_data(M_lever4_jz_Out1_test_ma_temp_ADDS,M_lever4_jz_Out1_test_ma_temp);
-    Buff_get_reg_32bit_data(M_lever4_jz_Out2_4ma_temp_ADDS,M_lever4_jz_Out2_4ma_temp);
-    Buff_get_reg_32bit_data(M_lever4_jz_Out2_20ma_temp_ADDS,M_lever4_jz_Out2_20ma_temp);
+    Buff_get_reg_32bit_data(M_lever4_jz_Out2_4ma_temp_ADDS,    M_lever4_jz_Out2_4ma_temp);
+    Buff_get_reg_32bit_data(M_lever4_jz_Out2_20ma_temp_ADDS,   M_lever4_jz_Out2_20ma_temp);
     Buff_get_reg_32bit_data(M_lever4_jz_Out2_test_ma_temp_ADDS,M_lever4_jz_Out2_test_ma_temp);
-    Buff_get_reg_32bit_data(Allow_error_ADDS,Allow_error);
-    Buff_get_reg_32bit_data(Alarm_low_nd_ADDS,Alarm_low_nd);
-    Buff_get_reg_32bit_data(Alarm_hight_nd_ADDS,Alarm_hight_nd);
-
+	
+    Buff_get_reg_32bit_data(Allow_error_ADDS,Allow_error);      //误差允许范围
+    Buff_get_reg_32bit_data(Alarm_low_nd_ADDS,Alarm_low_nd);    //低浓度报警值
+    Buff_get_reg_32bit_data(Alarm_hight_nd_ADDS,Alarm_hight_nd);//高浓度报警值
 }
 
 //===============================================================================
@@ -190,30 +184,27 @@ void Write_adds_reg_to_chip(void)
 }
 
 //===============================================================================
-//	finction	:Write_system_reg_to_chip	保存系统参数到FLASH
-//	input		:null
-//	output		:null
-//	return		:null
+//	finction	:Write_system_reg_to_chip	
 //	edit		:sam 2012-7-13 10:20
-//	modefy		:null
+//	description	:保存系统参数到FLASH
 //===============================================================================
 void Write_system_reg_to_chip(void)
 {
     uint32_t k,i;
 
-    Set_system_reg_to_buff();
-    Spi_write(SYSTEM_REG_PAGE,buff_page_w);					//write system reg
+    Set_system_reg_to_buff();              //将各种参数的值 写入buff_page_w缓存中
+    Spi_Page_Write(SYSTEM_REG_PAGE,buff_page_w);//将buff_page_w的值写入page1中
     DrvSYS_Delay(200000);
 
-    Buff_get_reg_32bit_data(0,FIRST_TIME_RW_FLAG);
-    Buff_get_reg_32bit_data(4,FX_write_index_adds_point);
-    Buff_get_reg_32bit_data(8,FX_read_index_adds_point);
-    Buff_get_reg_32bit_data(12,JZ_write_index_adds_point);
-    Buff_get_reg_32bit_data(16,JZ_read_index_adds_point);
-    Buff_get_reg_32bit_data(20,CW_write_index_adds_point);
-    Buff_get_reg_32bit_data(24,CW_read_index_adds_point);
-    Buff_get_reg_32bit_data(28,BJ_write_index_adds_point);
-    Buff_get_reg_32bit_data(32,BJ_read_index_adds_point);
+    Buff_get_reg_32bit_data(0,FIRST_TIME_RW_FLAG);       //第一次读写标志0XCCCCCCCC
+    Buff_get_reg_32bit_data(4,FX_write_index_adds_point);//分析写索引地址
+    Buff_get_reg_32bit_data(8,FX_read_index_adds_point); //分析读索引地址
+    Buff_get_reg_32bit_data(12,JZ_write_index_adds_point);//校正写索引地址
+    Buff_get_reg_32bit_data(16,JZ_read_index_adds_point); //校正读索引地址
+    Buff_get_reg_32bit_data(20,CW_write_index_adds_point);//错误写索引地址
+    Buff_get_reg_32bit_data(24,CW_read_index_adds_point); //错误读索引地址
+    Buff_get_reg_32bit_data(28,BJ_write_index_adds_point);//报警写索引地址
+    Buff_get_reg_32bit_data(32,BJ_read_index_adds_point); //报警读索引地址
 
     k=Float_to_int_reg(k2_prog_use);
     Buff_get_reg_32bit_data(36,k);
@@ -223,46 +214,42 @@ void Write_system_reg_to_chip(void)
     Buff_get_reg_32bit_data(44,k);
     buff_page_w[49]=k2_signe_flag;
 
-    Buff_get_reg_32bit_data(50,P_Tcall_temp);
+    Buff_get_reg_32bit_data(50,P_Tcall_temp);//校正时的温度
     Buff_get_reg_32bit_data(54,E_wait_time_temp);
     Buff_get_reg_32bit_data(58,Prj_correlat);
 
-    k=adj_4ma_pwm_data;
-    k<<=16;
-    k+=adj_4ma_pwm1_data;
+    k=(adj_4ma_pwm_data<<16) + adj_4ma_pwm1_data;
     Buff_get_reg_32bit_data(62,k);
 
-    k=adj_20ma_pwm_data;
-    k<<=16;
-    k+=adj_20ma_pwm1_data;
+    k=(adj_20ma_pwm_data<<16) + adj_20ma_pwm1_data;
     Buff_get_reg_32bit_data(66,k);
 
     Buff_get_reg_32bit_data(70,E_ADC_temperature1);
     Buff_get_reg_32bit_data(74,E_ADC_temperature2);
 
     buff_page_w[78]=Menu_lever3_start_flag;
-    Buff_get_reg_32bit_data(79,Pro_auto_time_dcnt);
+    Buff_get_reg_32bit_data(79,Pro_auto_time_dcnt);//自动分析时间计时
 
-    buff_page_w[83]=Machine_note_temp>>8;					//2012-10-29 11:17
+    buff_page_w[83]=Machine_note_temp>>8;		//从机节点设置			//2012-10-29 11:17
     buff_page_w[84]=Machine_note_temp;
 
-    Buff_get_reg_32bit_data(85,Set_xishu);
-    Buff_get_reg_32bit_data(89,set_cal_data);
+    Buff_get_reg_32bit_data(85,Set_xishu);   //设置稀释
+    Buff_get_reg_32bit_data(89,set_cal_data);//设置计算数据
     buff_page_w[93]=ZB_flag;
-    buff_page_w[94]=Uart2_BAUD_select_temp;
-    buff_page_w[95]=Uart2_JOJY_select_temp;
-    buff_page_w[96]=Uart2_STOP_select_temp;
+    buff_page_w[94]=Uart2_BAUD_select_temp;//串口2波特率选择
+    buff_page_w[95]=Uart2_JOJY_select_temp;//串口2校验选择
+    buff_page_w[96]=Uart2_STOP_select_temp;//串口2停止位选择
 
     for(i=0; i<13; i++)
-        buff_page_w[97+i]=Wait_data_buff[i];
+        buff_page_w[97+i]=Wait_data_buff[i];//日期：月日时分
 
-    buff_page_w[111]=Disple_flag;
+    buff_page_w[111]=Disple_flag;//是否消解标志
 
     buff_page_w[112]=M_lever4_start_mini_temp;
 
     buff_page_w[113]=wd_use_flag;
 
-    Spi_write(FIRST_REG_PAGE,buff_page_w);					//write first reg
+    Spi_Page_Write(FIRST_REG_PAGE,buff_page_w);//将buff_page_w 中的数据写入flash的page 0中
 }
 
 //===============================================================================
@@ -277,7 +264,7 @@ void Read_first_reg_data(void)
 {
     uint32_t adds_temp,i;
 
-    Spi_read(FIRST_REG_PAGE,buff_page);					//read first reg
+    Spi_Page_Read(FIRST_REG_PAGE,buff_page);					//read first reg
 
     FX_write_index_adds_point=Get_buff_32bit_data(4);
     FX_read_index_adds_point=Get_buff_32bit_data(8);
@@ -384,7 +371,7 @@ void System_reg_initial(void)
 /////	if(adds_temp!=FIRST_TIME_RW_FLAG)							//read flash data check and initial system reg
     if(adds_temp==FIRST_TIME_RW_FLAG)							//read flash data check and initial system reg
     {
-        Spi_read(SYSTEM_REG_PAGE,buff_page);							//read system reg 读系统参数扇区									//delay 30ms
+        Spi_Page_Read(SYSTEM_REG_PAGE,buff_page);							//read system reg 读系统参数扇区									//delay 30ms
 
         M_dongtai_flag=buff_page[M_dongtai_flag_ADDS];					//标准体积2 动态标志 0:not use 1:use
         M_menur1_lcd_Contrast_temp=buff_page[M_menur1_lcd_Contrast_temp_ADDS];

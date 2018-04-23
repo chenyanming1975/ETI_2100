@@ -58,7 +58,7 @@ uint16_t	Pro_auto_qingxi_freq_cnt;                       //清洗频率计数
 uint16_t	Pro_auto_jiaozheng_freq_cnt;                    //校正频率计数
 uint16_t	Pro_auto_hecha_freq_cnt;                        //核查频率计数
 
-uint8_t		Pro_power_on_flag;                              //上电开机标志
+uint8_t		Pro_power_on_flag;                              //上电开机标志 0-开机
 uint8_t 	Pro_step_status;                                //分析步骤状态
 volatile uint8_t 	Pro_wait_time_flag;                             //分析定时计时
 volatile uint32_t	Pro_wait_time_set;                              //分析定时计时
@@ -88,7 +88,7 @@ volatile uint32_t	E_wait_time_set;                                //
 volatile uint32_t	E_wait_time_cnt;                                //
 volatile uint32_t	E_ADC_temperature1;                             //
 volatile uint32_t	E_ADC_temperature2;                             //
-volatile uint8_t	Prog_disp_flag;                                 //分析状态显示控制标志
+volatile uint8_t	Prog_disp_flag;                                 //分析状态显示控制标志：1表示自动分析过程中
 
 uint8_t		Memu1_auto_step_status;					//分析步骤状态计数
 uint8_t         Memu1_hand_step_status;                                 //
@@ -100,119 +100,75 @@ volatile uint8_t	jiaozheng_sec_time_cnt;                         //校正次数计数
 
 //===============================================================================
 //	finction	:Read_pub_tx_tab
-//	input		:null
-//	output		:null
-//	return		:null
+//	input		:select: TB_pub_finc数组中的第几行
 //	edit		:sam 2013-2-5 11:37
-//	modefy		:null
+//	description	:流程控制函数,在Pub_finc_index中调用
 //===============================================================================
-void Read_pub_tx_tab(uint8_t select)		//读流程控制函数
+void Read_pub_tx_tab(uint8_t select)	
 {
     volatile uint16_t cnt,adds,data,wait_t;
     volatile uint8_t div;
     volatile uint8_t const *index;
 
-    cnt=select*7;
-    index=TB_pub_finc+cnt;
+    index = TB_pub_finc + select*7;
+    div=(*index);//slave addr
+	
+	//地址
+	index++;
+    adds=(*index)<<8;
+    index++;
+    adds |= (*index);
 
-    div=(*index);
+	//数据长度
+    index++;
+    data = (*index)<<8;
+    index++;
+    data |= (*index);
+	
+	//持续时间
+    index++;
+    wait_t=(*index)<<8;
+    ++index;
+    wait_t |= (*index);
 
-    ++index;
-    adds=(*index);
-    adds<<=8;
-    ++index;
-    adds|=(*index);
-
-    ++index;
-    data=(*index);
-    data<<=8;
-    ++index;
-    data|=(*index);
-
-    ++index;
-    wait_t=(*index);
-    wait_t<<=8;
-    ++index;
-    wait_t|=(*index);
-
-    Set_tx_cmd_data_finc(div,0x06,adds,data,0x00);
+    Set_tx_cmd_data_finc(div, 0x06, adds, data, 0x00);
     if(wait_t>0)
     {
-        Pro_wait_time_set=wait_t;	//set wait time
+        Pro_wait_time_set = wait_t;	//set wait time
     }
 }
 
 //===============================================================================
 //	finction	:Pub_finc_index
 //	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2013-2-5 11:37
-//	modefy		:null
+//	description	:读流程表并执行对应的控制
 //===============================================================================
-void Pub_finc_index(uint8_t const *index,uint8_t select)	//读流程表并执行对应的控制
+void Pub_finc_index(uint8_t const *index, uint8_t select)
 {
     volatile uint8_t sl_data;
 
-    sl_data=*(index+select);
+    sl_data = *(index+select);
     Read_pub_tx_tab(sl_data);
 }
 
 //===============================================================================
 //	finction	:Get_Prj_correlat
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-9-14 14:37
-//	modefy		:null
+//	description	:转换工程系数参数
 //===============================================================================
-float Get_Prj_correlat(void)		//转换工程系数参数
+float Get_Prj_correlat(void)	
 {
-    volatile float r_data,k;
-    volatile uint32_t i,j;
+    volatile float r_data = 0;
 
-    j=Prj_correlat;
-    r_data=0;
-
-    i=j>>20;
-    i&=0x0000000f;
-    k=i;
-    k*=100;
-    r_data+=k;
-
-    i=j>>16;
-    i&=0x0000000f;
-    k=i;
-    k*=10;
-    r_data+=k;
-
-    i=j>>12;
-    i&=0x0000000f;
-    k=i;
-    r_data+=k;
-
-    i=j>>8;
-    i&=0x0000000f;
-    k=i;
-    k/=10.0;
-    r_data+=k;
-
-    i=j>>4;
-    i&=0x0000000f;
-    k=i;
-    k/=100.0;
-    r_data+=k;
-
-    i=j;
-    i&=0x0000000f;
-    k=i;
-    k/=1000.0;
-    r_data+=k;
-
-    i=j>>28;
-    i&=0x0f;
-
-    if(i==2)
+    r_data  = ((Prj_correlat>>20) & 0xf) * 100;
+	r_data += ((Prj_correlat>>16) & 0xf) * 10;
+	r_data += ((Prj_correlat>>12) & 0xf) * 1;
+	r_data += ((Prj_correlat>>8 ) & 0xf) / 10.0;
+	r_data += ((Prj_correlat>>4 ) & 0xf) / 100.0;
+	r_data += ((Prj_correlat    ) & 0xf) / 1000.0;	
+   
+    if(((Prj_correlat>>28) & 0xf)==2)
         r_data=-r_data;
 
     return(r_data);
@@ -220,202 +176,84 @@ float Get_Prj_correlat(void)		//转换工程系数参数
 
 //===============================================================================
 //	finction	:Get_e_wait_time
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-9-14 14:37
-//	modefy		:null
+//	description	:转换取得分析的测试时间
 //===============================================================================
-uint32_t Get_e_wait_time(void)			//转换取得分析的测试时间
+uint32_t Get_e_wait_time(void)
 {
-    volatile uint32_t r_data,i,j;
+    volatile uint32_t r_data;
 
-    j=E_wait_time_temp;
-    r_data=0;
-
-    i=j>>8;
-    i&=0x0000000f;
-    i*=100;
-    r_data+=i;
-    i=j>>4;
-    i&=0x0000000f;
-    i*=10;
-    r_data+=i;
-    i=j;
-    i&=0x0000000f;
-    r_data+=i;
-
-    r_data*=100;
+	r_data =  ((E_wait_time_temp>>8) & 0xf) * 100;
+	r_data += ((E_wait_time_temp>>4) & 0xf) * 10;
+    r_data *= 100;
 
     return(r_data);
 }
 
-//===============================================================================
-//	finction	:DDSJ_change
-//	input		:null
-//	output		:null
-//	return		:null
-//	edit		:sam 2012-7-23 9:50
-//	modefy		:null
-//===============================================================================
-uint32_t DDSJ_change(uint32_t tmr)			//转换取得分析的等待时间
-{
-    volatile uint8_t	i;
-    volatile uint32_t	j;
 
-    j=0;
-    i=tmr>>8;
-    i&=0x0f;
-    i*=100;
-    j+=i;
-
-    i=tmr>>4;
-    i&=0x0f;
-    i*=10;
-    j+=i;
-
-    i=tmr;
-    i&=0x0f;
-    j+=i;
-
-    j*=100;
-
-    return(j);
-}
 
 //===============================================================================
 //	finction	:Int_to_float_reg
 //	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-23 9:50
-//	modefy		:null
+//	description	:整形转为浮点
 //===============================================================================
-float Int_to_float_reg(uint32_t data)		//整形转为浮点
+float Int_to_float_reg(uint32_t data)
 {
-    volatile float i,m;
-    volatile uint32_t a,b,k;
-
-    a=data>>16;
-    b=data;
-    b&=0x0000ffff;
-
-    i=0;
-    k=a>>12;
-    k&=0x0000000f;
-    k*=1000;
-    i+=k;
-    k=a>>8;
-    k&=0x0000000f;
-    k*=100;
-    i+=k;
-    k=a>>4;
-    k&=0x0000000f;
-    k*=10;
-    i+=k;
-    k=a;
-    k&=0x0000000f;
-    k*=1;
-    i+=k;
+    volatile float i;
+   
+    i = ((data>>28) & 0xf) * 1000;
+	i+= ((data>>24) & 0xf) * 100;
+	i+= ((data>>20) & 0xf) * 10;
+    i+= ((data>>16) & 0xf) * 1;
 //--------------------------------
-    k=b>>12;
-    k&=0x0000000f;
-    m=k;
-    m/=10.0;
-    i+=m;
-    k=b>>8;
-    k&=0x0000000f;
-    m=k;
-    m/=100.0;
-    i+=m;
-    k=b>>4;
-    k&=0x0000000f;
-    m=k;
-    m/=1000.0;
-    i+=m;
-    k=b;
-    k&=0x0000000f;
-    m=k;
-    m/=10000.0;
-    i+=m;
-
+	i+= ((data>>12) & 0xf) / 10.0;
+    i+= ((data>>8 ) & 0xf) / 100.0;
+	i+= ((data>>4 ) & 0xf) / 1000.0;
+    i+= ((data>>4 ) & 0xf) / 10000.0;
+    
     return(i);
 }
 
 //===============================================================================
 //	finction	:Float_to_int_reg
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-23 9:50
-//	modefy		:null
+//	description	:浮点转为整形
 //===============================================================================
 uint32_t fti_jtp;
-
-uint32_t Float_to_int_reg(float data)		//浮点转为整形
+uint32_t Float_to_int_reg(float data)
 {
-    volatile uint32_t i,zs,ss,r_data;
+    volatile uint32_t i,zs,ss,r_data = 0;
     volatile float a;
 
-    fti_jtp=r_data=0;
+    fti_jtp = 0;
 
-    a=data*10000;
-    i=a;
-    zs=data;
-    ss=i-zs*10000;
+    a = data*10000;
+	i = a;
+    zs= data;
+    ss=i-zs*10000;//取小数点
 
-    fti_jtp=zs/1000;
-    fti_jtp%=10;
-    fti_jtp<<=28;
-    r_data+=fti_jtp;
-
-    fti_jtp=zs/100;
-    fti_jtp%=10;
-    fti_jtp<<=24;
-    r_data+=fti_jtp;
-
-    fti_jtp=zs/10;
-    fti_jtp%=10;
-    fti_jtp<<=20;
-    r_data+=fti_jtp;
-
-    fti_jtp=zs;
-    fti_jtp%=10;
-    fti_jtp<<=16;
-    r_data+=fti_jtp;
+    r_data =  (zs/1000%10) << 28;
+    r_data += (zs/100 %10) << 24;
+    r_data += (zs/10  %10) << 20;
+	r_data += (zs/1   %10) << 16;
 //------------------------
-    fti_jtp=ss/1000;
-    fti_jtp<<=12;
-    r_data+=fti_jtp;
-
-    fti_jtp=ss/100;
-    fti_jtp%=10;
-    fti_jtp<<=8;
-    r_data+=fti_jtp;
-
-    fti_jtp=ss/10;
-    fti_jtp%=10;
-    fti_jtp<<=4;
-    r_data+=fti_jtp;
-
-    fti_jtp=ss/1;
-    fti_jtp%=10;
-    r_data+=fti_jtp;
-
+    r_data += (ss/1000)   << 12;
+	r_data += (ss/100%10) << 8;
+	r_data += (ss/10 %10) << 4;
+	r_data += (ss/1  %10) ;
     return(r_data);
 }
 
 //===============================================================================
 //	finction	:Float_to_int_reg_ee
 //	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-23 9:50
-//	modefy		:null
+//	description	:浮点转为整形
 //===============================================================================
-uint32_t Float_to_int_reg_ee(float data)		//浮点转为整形
+uint32_t Float_to_int_reg_ee(float data)
 {
-    volatile uint32_t i,zs,ss,r_data;
+    volatile uint32_t i,zs,ss,r_data = 0;
     volatile float a;
 
     r_data=0;
@@ -426,44 +264,15 @@ uint32_t Float_to_int_reg_ee(float data)		//浮点转为整形
     zs=data;
     ss=i-zs*10000;
 
-    fti_jtp=zs/1000;
-    fti_jtp%=10;
-    fti_jtp<<=28;
-    r_data+=fti_jtp;
-
-    fti_jtp=zs/100;
-    fti_jtp%=10;
-    fti_jtp<<=24;
-    r_data+=fti_jtp;
-
-    fti_jtp=zs/10;
-    fti_jtp%=10;
-    fti_jtp<<=20;
-    r_data+=fti_jtp;
-
-    fti_jtp=zs;
-    fti_jtp%=10;
-    fti_jtp<<=16;
-    r_data+=fti_jtp;
+	r_data =  (zs/1000%10) << 28;
+    r_data += (zs/100 %10) << 24;
+    r_data += (zs/10  %10) << 20;
+	r_data += (zs/1   %10) << 16;
 //------------------------
-    fti_jtp=ss/1000;
-    fti_jtp%=10;
-    fti_jtp<<=12;
-    r_data+=fti_jtp;
-
-    fti_jtp=ss/100;
-    fti_jtp%=10;
-    fti_jtp<<=8;
-    r_data+=fti_jtp;
-
-    fti_jtp=ss/10;
-    fti_jtp%=10;
-    fti_jtp<<=4;
-    r_data+=fti_jtp;
-
-    fti_jtp=ss/1;
-    fti_jtp%=10;
-    r_data+=fti_jtp;
+    r_data += (ss/1000%10)<< 12;
+	r_data += (ss/100%10) << 8;
+	r_data += (ss/10 %10) << 4;
+	r_data += (ss/1  %10) ;
 
     return(r_data);
 }
@@ -471,12 +280,10 @@ uint32_t Float_to_int_reg_ee(float data)		//浮点转为整形
 //===============================================================================
 //	finction	:Float_to_int_reg_ee2
 //	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-23 9:50
-//	modefy		:null
+//	description	:浮点转为整形
 //===============================================================================
-uint32_t Float_to_int_reg_ee2(float data)		//浮点转为整形
+uint32_t Float_to_int_reg_ee2(float data)
 {
     volatile uint32_t i,zs,ss,r_data;
     volatile float a;
@@ -489,163 +296,67 @@ uint32_t Float_to_int_reg_ee2(float data)		//浮点转为整形
     zs=data;
     ss=i-zs*10000;
 
-    fti_jtp=zs/1000;
-    fti_jtp%=10;
-    fti_jtp<<=28;
-    r_data+=fti_jtp;
-
-    fti_jtp=zs/100;
-    fti_jtp%=10;
-    fti_jtp<<=24;
-    r_data+=fti_jtp;
-
-    fti_jtp=zs/10;
-    fti_jtp%=10;
-    fti_jtp<<=20;
-    r_data+=fti_jtp;
-
-    fti_jtp=zs;
-    fti_jtp%=10;
-    fti_jtp<<=16;
-    r_data+=fti_jtp;
+	r_data =  (zs/1000%10) << 28;
+    r_data += (zs/100 %10) << 24;
+    r_data += (zs/10  %10) << 20;
+	r_data += (zs/1   %10) << 16;
 //------------------------
-    fti_jtp=ss/1000;
-    fti_jtp%=10;
-    fti_jtp<<=12;
-    r_data+=fti_jtp;
-
-    fti_jtp=ss/100;
-    fti_jtp%=10;
-    fti_jtp<<=8;
-    r_data+=fti_jtp;
-
-    fti_jtp=ss/10;
-    fti_jtp%=10;
-    fti_jtp<<=4;
-    r_data+=fti_jtp;
-
-    fti_jtp=ss/1;
-    fti_jtp%=10;
-    r_data+=fti_jtp;
-
+    r_data += (ss/1000%10)<< 12;
+	r_data += (ss/100%10) << 8;
+	r_data += (ss/10 %10) << 4;
+	r_data += (ss/1  %10) ;
+	
     return(r_data);
 }
 
 //===============================================================================
 //	finction	:Float_to_int_data
-//	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-23 9:50
-//	modefy		:null
+//	description	:浮点转为整形
 //===============================================================================
-uint32_t Float_to_int_data(float data)		//浮点转为整形
+uint32_t Float_to_int_data(float data)	
 {
-    volatile uint32_t k,i,r_data;
+    volatile uint32_t i,r_data;
 
     i=data*10000;
-    r_data=0;
 
-    k=i/100000;
-    k=k%10;
-    k=k<<20;
-    r_data+=k;
-
-    k=i/10000;
-    k=k%10;
-    k=k<<16;
-    r_data+=k;
-
-    k=i/1000;
-    k=k%10;
-    k=k<<12;
-    r_data+=k;
-
-    k=i/100;
-    k=k%10;
-    k=k<<8;
-    r_data+=k;
-
-    k=i/10;
-    k=k%10;
-    k=k<<4;
-    r_data+=k;
-
-    k=i;
-    k=k%10;
-    r_data+=k;
-
+    r_data = (i/100000%10) << 20;
+	r_data+= (i/10000 %10) << 16;
+	r_data+= (i/1000  %10) << 12;
+    r_data+= (i/100   %10) << 8;
+	r_data+= (i/10    %10) << 4;
+	r_data+= (i%10);
+  
     return(r_data);
 }
 
 //===============================================================================
 //	finction	:Int_to_float_data
 //	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-23 9:50
-//	modefy		:null
+//	description	:浮点转为整形
 //===============================================================================
-float Int_to_float_data(uint32_t data)		//浮点转为整形
+float Int_to_float_data(uint32_t data)
 {
-    volatile float k,r_data;
-    volatile uint32_t i;
+    volatile float r_data = 0;
 
-    r_data=0;
-
-    i=data>>24;
-    i&=0x0000000f;
-    k=i;
-    k=k*100;
-    r_data+=k;
-
-    i=data>>20;
-    i&=0x0000000f;
-    k=i;
-    k=k*10;
-    r_data+=k;
-
-    i=data>>16;
-    i&=0x0000000f;
-    k=i;
-    r_data+=k;
-
-    i=data>>12;
-    i&=0x0000000f;
-    k=i;
-    k=k/10;
-    r_data+=k;
-
-    i=data>>8;
-    i&=0x0000000f;
-    k=i;
-    k=k/100;
-    r_data+=k;
-
-    i=data>>4;
-    i&=0x0000000f;
-    k=i;
-    k=k/1000;
-    r_data+=k;
-
-    i=data;
-    i&=0x0000000f;
-    k=i;
-    k=k/10000;
-    r_data+=k;
-
+    r_data =  ((data>>24) & 0xf)*100;
+	r_data += ((data>>20) & 0xf)*10;
+	r_data += ((data>>16) & 0xf)*1;
+	r_data += ((data>>12) & 0xf)/10;
+	r_data += ((data>>8 ) & 0xf)/100;
+	r_data += ((data>>4 ) & 0xf)/1000;
+	r_data += ((data    ) & 0xf)/10000;
     return(r_data);
 }
 
 //===============================================================================
 //	finction	:nd_to_float_data
 //	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-23 9:50
-//	modefy		:null
+//	description	:浮点转为整形
 //===============================================================================
-float nd_to_float_data(uint32_t data)		//浮点转为整形
+float nd_to_float_data(uint32_t data)
 {
     volatile float k,r_data;
     volatile uint32_t i;
@@ -829,12 +540,10 @@ float SJTJ_to_float_data(uint32_t data)		//浮点转为整形 试剂参数用
 //===============================================================================
 //	finction	:Correcting_fintion
 //	input		:null
-//	output		:null
-//	return		:null
 //	edit		:sam 2012-7-23 9:50
-//	modefy		:null
+//	description	:校正方程
 //===============================================================================
-float Correcting_fintion(float x_temp)		//校正方程
+float Correcting_fintion(float x_temp)
 {
     volatile float a,b,c,d,x,y;
 
@@ -853,8 +562,8 @@ float Correcting_fintion(float x_temp)		//校正方程
 
     x=x_temp;
 
-    y=a*x*x*x+b*x*x+c*x+d;
-//    y=a*x*x+b*x+c;
+    y=a*x*x*x + b*x*x + c*x + d;
+	
     M_menur1_FY_temp=Float_to_int_reg(y);		//Float_to_int_data(y);
 
     return(y);
@@ -1232,7 +941,6 @@ float DJFFXND_calculat(void)		//计算-电极法分析浓度
     k1+=kk;
     if(M_menur1_slope_flag!=1)  k1=-k1;
 
-    jisuan_k_temp=k1;							//2013-4-25 17:01
     pub_math_temp=pow(10,(-x2)/(k1*Tmea/P_Tcall_temp));
 //    pub_math_temp=pow(10,(-x2)/(k2_prog_use*Tmea/P_Tcall_temp));	//old
 
@@ -1254,7 +962,6 @@ float DJFFXND_calculat(void)		//计算-电极法分析浓度
     if(c2_temp<0) c2_temp=0;
     df_temp=1;
 
-/////    tx_jisuan_data(2);							//for test
     return(c2_temp);
 }
 
@@ -1740,7 +1447,7 @@ void Power_on_check_device(void)			//开机检查驱动板和传感器板函数
     Rx_TX_flag_local=1;
     Set_tx_cmd_data_finc(U_DRIVER_MODU_ADDS,0x03,U_DRIVER_READ_APP_ADDS,0x0001,0x00);    //检查驱动板
 
-    U_data_buff[4]=U_data_buff[3]=0;
+    U_data_buff[4] = U_data_buff[3]=0;
 
     for(i=0; i<250; i++)
     {
@@ -1934,7 +1641,7 @@ check_error:
             i=252;
     }
 
-    Uart_tx_rx_fifo_int_FLAG&=~BIT2;
+    Uart_tx_rx_fifo_int_FLAG &=~ BIT2;
 
     buff_bool[2]=U_data_buff[3];
     buff_bool[3]=U_data_buff[4];
@@ -2006,16 +1713,13 @@ check_exit:
 //===============================================================================
 void Program_power_on_initial(void)			//开机初始化硬件函数
 {
-//    uint16_t i;
-
-    if((Pro_power_on_flag==1)&&(Pro_wait_time_flag==2)&&(Rx_TX_flag==0))
+    if((Pro_power_on_flag==1) && (Pro_wait_time_flag==2) && (Rx_TX_flag==0))
     {
         Pro_wait_time_set=60;	//wait 500ms
         switch(Pro_step_status)
         {
         case 0:
             Far_status_flag=0;
-//                    Reset_init_UART1(0);
             Set_tx_cmd_data_finc(U_DRIVER_MODU_ADDS,0x06,U_DRIVER_FA_ALL_WO_ADDS,0x0000,0x00);		//close all v
             ++Pro_step_status;
             break;
@@ -2041,21 +1745,6 @@ void Program_power_on_initial(void)			//开机初始化硬件函数
             ++Pro_step_status;
             break;
         case 6:
-//    	            U2_disple_flag=0;
-//
-//	            U2_re_table[0]=Machine_note_use;
-//	            U2_re_table[1]=0x65;			//结束消解
-//	            U2_re_table[2]=0x00;
-//	            U2_re_table[3]=0x00;
-//	            U2_re_table[4]=0x00;
-//	            U2_re_table[5]=0x00;
-//
-//	            i=CRC16(U2_re_table,6);
-//	            U2_re_table[6]=i;
-//	            U2_re_table[7]=i>>8;
-//
-//	            U2_TX_byte_lenth=0x08;
-//	            Uart2_start_tx();
             ++Pro_step_status;
             break;
         case 7:
@@ -2086,7 +1775,6 @@ void Program_reset_initial(void)			//开机初始化硬件参数函数
         if(Rx_TX_flag==0)	/* Wait Tx empty */
         {
             Program_reset_initial_flag=0;
-////        Hand_finction_step_select=0xff;
             Hand_finction_step_select=0;
             E_step_cnt=0;
             df_temp=1;				//2012-7-24 10:55
@@ -2108,10 +1796,6 @@ void Program_reset_initial(void)			//开机初始化硬件参数函数
             if(Pro_power_on_flag==0)
                 Pro_power_on_flag=1;
 
-//////          M_lever4_start_munth_temp=0;	//2013-2-7 17:18
-//////          M_lever4_start_day_temp=0;
-//////          M_lever4_start_hour_temp=0;
-//////          M_lever4_start_mini_temp=0;
             Auto_check_clock_flag=0;
 
             Pro_wait_time_set=0;
@@ -2120,10 +1804,6 @@ void Program_reset_initial(void)			//开机初始化硬件参数函数
             Pro_auto_time_dcnt_bak=0;
             Pro_auto_time_up_check_flag=0;
             Pro_dis_menu_flag=0;
-//          M_lever4_FXCS_temp=0;
-//          Rx_TX_flag=0;
-//          k1_prog_use=0;
-//          k2_prog_use=0;
             c1_prog_use=0;
             c2_prog_use=0;
             c3_prog_use=0;
@@ -3071,142 +2751,7 @@ void BY2_addtion(void)			//加标液2函数
     }
 }
 
-////===============================================================================
-////	finction	:PaiKong_washing
-////	input		:null
-////	output		:null
-////	return		:null
-////	edit		:sam 2012-7-20 11:46
-////	modefy		:null
-////===============================================================================
-//void PaiKong_washing(void)			//排空清洗
-//{
-//   if((Pro_wait_time_flag==2)&&(Rx_TX_flag==0))
-//   {
-//       Pro_wait_time_set=200;	//wait 500ms 2015-7-2 11:13
-//       switch(Pro_step_status)
-//       {
-//       	  case 0:
-//       	         All_program_menu_disp(13);
-//                 if(Disple_flag==1)
-//                 {
-////                     Reset_init_UART1(1);
-////	             DrvSYS_Delay(200000);
-//	             U2_disple_flag=0;
-//	             Set_tx_cmd_data_finc(0x55,0xAA,0x6500,0x66BB,0x00);
-//	             U_Rx_wait_time_flag_temp=0;
-//	             Rx_TX_flag=0;
-//                     Pro_wait_time_set=150;	//wait 1.5sec
-//
-//                     Pro_step_status=37;
-//                     goto ex_paikong;
-//                 }
-//       	  break;
-//       	  case 35:
-//                 if(Disple_flag==1)
-//                 {
-//    	             Pro_wait_time_set=24000;	//wait 240sec
-//    	             ++Pro_step_status;
-//    	             goto ex_paikong;
-//    	         }
-//    	         else Pro_step_status=0xff;
-//       	  break;
-//       	  case 36:
-//       	        Pro_step_status=0xff;
-//       	  break;
-//       	  case 37:
-//    	         if(U2_disple_flag==1)
-//    	         {
-//    	             U2_disple_flag=0;
-//    	             Pro_step_status=0;
-////    	             Reset_init_UART1(0);
-//    	             break;
-//    	         }
-//    	         else
-//    	         {
-//    	             Set_tx_cmd_data_finc(0x55,0xAA,0x6500,0x66BB,0x00);
-//                     U_Rx_wait_time_flag_temp=0;
-//	             Rx_TX_flag=0;
-//	             Pro_wait_time_set=150;	//wait 1.5sec
-//    	         }
-//       	  goto ex_paikong;
-//       }
-//       if(Pro_step_status!=0xff)
-//       {
-//          DrvSYS_Delay(10000);
-//          Pub_finc_index(TB_paikong_index,Pro_step_status);
-//          ++Pro_step_status;
-//       }
-//ex_paikong:
-//       Pro_wait_time_flag=1;
-//   }
-//}
 
-//===============================================================================
-//	finction	:PaiKong_washing
-//	input		:null
-//	output		:null
-//	return		:null
-//	edit		:sam 2012-7-20 11:46
-//	modefy		:null
-//===============================================================================
-/*
-void PaiKong_washing(void)			//排空清洗
-{
-    uint32_t tv,sv,r1v,r2v,r3v,r4v;
-
-    r1v=Get_SJ_Volume_data(M_menur1_sj1_v_temp);
-    r2v=Get_SJ_Volume_data(M_menur1_sj2_v_temp);
-    r3v=Get_SJ_Volume_data(M_menur1_sj3_v_temp);
-    r4v=Get_SJ_Volume_data(M_menur1_sj4_v_temp);
-    //sv=Get_Volume_data(M_menur1_sample_v_temp);
-    sv=Get_Volume_data(0x00001000);				//2017/4/25 15:42
-    tv=((sv+r1v+r2v+r3v+r4v)/2+0.5)/ZSB_MOTO_STEP_V;			//2015.05.19 add
-
-   if((Pro_wait_time_flag==2)&&(Rx_TX_flag==0))
-   {
-       Pro_wait_time_set=60;	//wait 500ms
-       switch(Pro_step_status)
-       {
-       	  case 0:
-       	         All_program_menu_disp(13);
-       	  break;
-       	  case 7:
-       	  case 11:
-       	  case 17:
-       	  case 21:
-       	  case 27:
-       	  case 31:
-       	         DrvSYS_Delay(100000);
-       	         Set_tx_cmd_data_finc(U_DRIVER_MODU_ADDS,0x06,0x1301,tv,0x00);   		//ZSB_move_to
-       	  break;
-       	  //------------------------------------2016/6/16 10:33
-       	  case 35:
-       	         Set_tx_cmd_data_finc(U_DRIVER_MODU_ADDS,0x06,U_DRIVER_FA10_WO_ADDS,BATTERY_VAL_OPEN,0x00);  	//2016/5/17 15:25
-       	         Pro_wait_time_set=200;
-
-                 ++Pro_step_status;
-       	  goto ex_paikong;
-       	  case 36:
-       	         Set_tx_cmd_data_finc(U_DRIVER_MODU_ADDS,0x06,U_DRIVER_FA10_WO_ADDS,BATTERY_VAL_CLOSE,0x00);  //2016/5/17 15:25
-
-                 ++Pro_step_status;
-       	  goto ex_paikong;
-       	  case 37:
-                 Pro_step_status=0xff;
-       	  goto ex_paikong;
-       }
-       if(Pro_step_status!=0xff)
-       {
-          DrvSYS_Delay(10000);
-          Pub_finc_index(TB_paikong_index,Pro_step_status);
-          ++Pro_step_status;
-       }
-ex_paikong:
-       Pro_wait_time_flag=1;
-   }
-}
-*/
 void PaiKong_washing(void)			//排空清洗
 {
     uint32_t tv,sv,r1v,r2v,r3v,r4v;
@@ -3218,7 +2763,7 @@ void PaiKong_washing(void)			//排空清洗
     sv=Get_Volume_data(0x00001000);
     tv=((sv+r1v+r2v+r3v+r4v)/2+0.5)/ZSB_MOTO_STEP_V;
 
-    if((Pro_wait_time_flag==2)&&(Rx_TX_flag==0))
+    if( (Pro_wait_time_flag==2) && (Rx_TX_flag==0) )
     {
         Pro_wait_time_set=60;	//wait 500ms
         switch(Pro_step_status)
@@ -5548,8 +5093,6 @@ void Menu1_hand_fenxi_finc(void)			//手动分析控制流程函数
     {
     case 0:
         DrvSYS_Delay(200000);
-/////    	    tx_jisuan_data(1);					//for test
-
         Pro_wait_time0_flag=0;
         if((Pro_step_status==0xff)||(Pro_step_status==0x00))
         {
@@ -7746,7 +7289,7 @@ void Get_auto_man_time(void)		//取自动分析的周期时间
 {
     volatile  uint8_t i;
 
-    Spi_read(FIRST_REG_PAGE,buff_page);
+    Spi_Page_Read(FIRST_REG_PAGE,buff_page);
 
     buff_page[78]=Menu_lever3_start_flag;
 
@@ -7758,7 +7301,7 @@ void Get_auto_man_time(void)		//取自动分析的周期时间
     for(i=0; i<13; i++)
         buff_page[97+i]=Wait_data_buff[i];
 
-    Spi_write(FIRST_REG_PAGE,buff_page);
+    Spi_Page_Write(FIRST_REG_PAGE,buff_page);
 }
 
 //===============================================================================
@@ -8001,25 +7544,15 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
             jiaozheng_sec_time_cnt=0;
 
             j=0;
-            i=M_lever4_FXPL_temp>>12;		//取分析频率
-            i&=0x0000000f;
-            i*=1000;
+            i= ((M_lever4_FXPL_temp>>12) & 0xf) * 1000;		//取分析频率
             j+=i;
-            i=M_lever4_FXPL_temp>>8;
-            i&=0x0000000f;
-            i*=100;
+            i=((M_lever4_FXPL_temp>>8) & 0xf ) * 100;
             j+=i;
-            i=M_lever4_FXPL_temp>>4;
-            i&=0x0000000f;
-            i*=10;
+            i=((M_lever4_FXPL_temp>>4) & 0xf) * 10;
             j+=i;
-            i=M_lever4_FXPL_temp;
-            i&=0x0000000f;
+            i=M_lever4_FXPL_temp & 0xf;
             j+=i;
-
-            //i=j;
             j*=6000;
-
             j-=2470;
 
             Pro_auto_time_dcnt=j;    	    //start down cnt
@@ -8036,30 +7569,25 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
 //            Write_system_reg_to_chip();			//2012-10-17 14:41
         fix_repower_flag=0;
         break;
-    case 7:				   //是否清洗
+    case 7:				               //是否清洗
         aj=0;
-        ai=M_lever4_QXPL_temp>>8;	   //取清洗频率
-        ai&=0x000f;
-        ai*=100;
+        ai=((M_lever4_QXPL_temp>>8)&0xf) * 100;	   //取清洗频率
         aj=ai;
-        ai=M_lever4_QXPL_temp>>4;
-        ai&=0x000f;
-        ai*=10;
+        ai=((M_lever4_QXPL_temp>>4)&0xf) * 10;
         aj+=ai;
-        ai=M_lever4_QXPL_temp;
-        ai&=0x000f;
+        ai=M_lever4_QXPL_temp&0xf;
         aj+=ai;
 
-        if(M_lever4_QXPL_temp==0x00000000)
+        if(M_lever4_QXPL_temp==0x00000000)//不做清洗
             Memu1_auto_step_status=9;
-        else if(Pro_auto_qingxi_freq_cnt==aj)
+        else if(Pro_auto_qingxi_freq_cnt==aj)//清洗频率相等，下次调用清洗函数
         {
             Memu1_auto_step_status=8;
             Pro_step_status=0;
             Fa_clean_select_temp=clean_loop_cnt=0;
         }
         else
-            Memu1_auto_step_status=9;
+            Memu1_auto_step_status=9;//不做清洗
         break;
     case 8:		//清洗
         if(Pro_step_status==0xff)
@@ -8067,9 +7595,10 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
             ++Memu1_auto_step_status;
             Pro_step_status=0;
         }
-        else  Clear_finction();	   //调清洗函数
+        else  
+			Clear_finction();//调清洗函数
         break;
-    case 9:				   //是否校准
+    case 9:				     //是否校准
         yes_not=0;
 
         aj=0;
@@ -8101,8 +7630,8 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
             Memu1_hand_step_status=0;
         }
         break;
-    case 10:
-        if(Memu1_jiaozheng_step_status==0xff)
+    case 10:                    //校正分析 
+        if(Memu1_jiaozheng_step_status==0xff)//校正分析完成
         {
             ++jiaozheng_sec_time_cnt;
             ++Memu1_auto_step_status;
@@ -8111,10 +7640,11 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
             Pro_auto_jiaozheng_freq_cnt=0;		//clear conter
             aoto_paikong_flag=1;
         }
-        else  Menu1_hand_jiaozheng_finc();			//调用校正分析函数
+        else  
+			Menu1_hand_jiaozheng_finc();			//调用校正分析函数
         break;
     case 11:
-        if(j_prog_use!=0)
+        if(j_prog_use != 0)
         {
             if(M_menur1_analy_obj_select_temp==1)		//分析物是NH4-N ，判断校正值是否在范围内，做对应的控制
             {
@@ -8171,11 +7701,6 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
         Memu1_hand_step_status=0;
         Pro_step_status=0;
 
-//    	    Get_write_struct_data(2,3,Pub_result_temp,4,yes_not,result_signe);	 //save data
-//    	    Sub_adds=Write_result_to_flash(JZ_write_index_adds_point,&Jiaozheng);
-//    	    JZ_write_index_adds_point=Sub_adds;
-//    	    Write_index_adds_point();
-
         yes_not=0;
         break;
     case 14:
@@ -8189,7 +7714,8 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
             ++Pro_auto_hecha_freq_cnt;
             aoto_paikong_flag=1;
         }
-        else  Menu1_hand_fenxi_finc();		//调用手动分析流程
+        else  
+			Menu1_hand_fenxi_finc();		//调用手动分析流程
         break;
     case 15:
         pr_data=0;
@@ -8270,7 +7796,7 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
         else
             Memu1_auto_step_status=18;
         break;
-    case 17:
+    case 17:  //稀释
         if(Memu1_xishi_step_status==0xff)
         {
             ++Memu1_auto_step_status;
@@ -8283,11 +7809,6 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
         break;
     case 18:
         ++Memu1_auto_step_status;
-
-//    	    Get_write_struct_data(1,1,Pub_result_temp,M_menur1_unit_select_temp,yes_not,result_signe);	 //save data
-//    	    Sub_adds=Write_result_to_flash(FX_write_index_adds_point,&Fenxi);
-//    	    FX_write_index_adds_point=Sub_adds;
-//    	    Write_index_adds_point();
         break;
     case 19:			//标液核查
         aj=0;
@@ -8382,7 +7903,7 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
         }
         else Memu1_auto_step_status=24;
         break;
-    case 20:
+    case 20: //加标液
         if(Memu1_biaoye_step_status==0xff)
         {
             ++Memu1_auto_step_status;
@@ -8391,7 +7912,8 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
             Memu1_biaoye_step_status=0;
             aoto_paikong_flag=1;
         }
-        else  Menu1_biaoye_hecha_finc();		//调用核查流程控制函数
+        else  
+			Menu1_biaoye_hecha_finc();		//调用核查流程控制函数
         break;
     case 21:
         k=pr_data=0;
@@ -8464,7 +7986,8 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
             Memu1_auto_step_status=23;
             Pro_auto_hecha_freq_cnt=0;
         }
-        else Memu1_auto_step_status=22;
+        else 
+			Memu1_auto_step_status=22;
         break;
     case 22:
         if(jiaozheng_sec_time_cnt==2)
@@ -8486,8 +8009,8 @@ void Menu1_auto_fenxi_finc(void)		//自动分析流程控制函数
 
         yes_not=0;
         break;
-    case 24:
-        if(Pro_step_status==0xff)
+    case 24:   //排空清洗
+        if(Pro_step_status==0xff)//排空清洗完成
         {
             U2_disple_flag=0;
             ++Memu1_auto_step_status;
@@ -9087,27 +8610,6 @@ fix_auto_power:
         else
             PaiKong_washing();
         break;
-//    	case 35:
-//    	    if(U2_disple_flag==1)
-//    	    {
-//    	    	U2_disple_flag=0;
-//    	    	++Memu1_auto_step_status;
-//    	    }
-//    	    else if(Pro_wait_time_set<=41850)
-//    	    {
-//    	    	Set_tx_cmd_data_finc(Machine_note_use,0x65,0x0000,0x0000,0x00);
-//                U_Rx_wait_time_flag_temp=0;
-//	        Rx_TX_flag=0;
-//	        DrvSYS_Delay(200000);
-//    	    }
-//    	break;
-//    	case 36:
-//    	    if((Pro_wait_time_flag==2)&&(Rx_TX_flag==0))
-//    	    {
-//    	        Reset_init_UART1(0);
-//    	        Memu1_auto_step_status=25;
-//    	    }
-//    	break;
     }
 }
 
@@ -9435,7 +8937,7 @@ void Read_last_result(uint32_t adds,uint8_t select,uint8_t data_select)
         else
             adds_b-=0x20;
     }
-    Spi_read(adds_a,buff_page);
+    Spi_Page_Read(adds_a,buff_page);
 
     if(data_select==1)
     {

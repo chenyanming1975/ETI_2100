@@ -173,7 +173,7 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4100</DriverSelection>
+            <DriverSelection>4101</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>NULink\Nu_Link.dll</Flash2>
@@ -513,6 +513,11 @@
               <FileName>接口说明文档.txt</FileName>
               <FileType>5</FileType>
               <FilePath>.\接口说明文档.txt</FilePath>
+            </File>
+            <File>
+              <FileName>程序问题.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\程序问题.txt</FilePath>
             </File>
           </Files>
         </Group>
